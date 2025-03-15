@@ -24,6 +24,19 @@
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="button_0">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>180</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0</string>
+    </property>
+   </widget>
    <widget class="QPushButton" name="button_1">
     <property name="geometry">
      <rect>
@@ -50,7 +63,7 @@
      <string>2</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="button_plus">
+   <widget class="QPushButton" name="button_3">
     <property name="geometry">
      <rect>
       <x>200</x>
@@ -60,7 +73,111 @@
      </rect>
     </property>
     <property name="text">
+     <string>3</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_4">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>100</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>4</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_5">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>100</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>5</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_6">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>100</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>6</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_7">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>140</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>7</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_8">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>140</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>8</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_9">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>140</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>9</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_plus">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>60</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
      <string>+</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_multiply">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>100</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>*</string>
     </property>
    </widget>
    <widget class="QLabel" name="input_label">
@@ -80,7 +197,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>110</y>
+      <y>310</y>
       <width>57</width>
       <height>14</height>
      </rect>
@@ -93,7 +210,7 @@
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>100</y>
+      <y>300</y>
       <width>141</width>
       <height>23</height>
      </rect>
@@ -114,11 +231,50 @@
      <number>0</number>
     </property>
    </widget>
+
+    <widget class="QLabel" name="output_label_lcd">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>350</y>
+      <width>57</width>
+      <height>14</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Infix:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="output_infix">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>340</y>
+      <width>200</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <!-- <property name="smallDecimalPoint">
+     <bool>true</bool>
+    </property> -->
+    <!-- <property name="digitCount">
+     <number>9</number>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+    <property name="value" stdset="0">
+     <double>0.000000000000000</double>
+    </property>
+    <property name="intValue" stdset="0">
+     <number>0</number>
+    </property> -->
+   </widget>
    <widget class="QPushButton" name="button_equal">
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>60</y>
+      <y>140</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -140,6 +296,7 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ 
  <resources/>
  <connections/>
 </ui>
