@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
     button_equal:QPushButton
     input_text:QLineEdit
 
-    output_infix: QLineEdit
+    output_infix: QLCDNumber
     output_lcd:QLCDNumber
 
 

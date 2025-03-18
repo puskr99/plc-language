@@ -11,26 +11,31 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Calculator</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLineEdit" name="input_text">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>20</x>
       <y>30</y>
-      <width>113</width>
-      <height>22</height>
+      <width>361</width>
+      <height>50</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QPushButton" name="button_0">
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>180</y>
+      <y>270</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -41,9 +46,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>60</y>
+      <y>90</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -54,9 +59,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>60</y>
+      <y>90</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -67,9 +72,9 @@
     <property name="geometry">
      <rect>
       <x>200</x>
-      <y>60</y>
+      <y>90</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -80,9 +85,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>100</y>
+      <y>150</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -93,9 +98,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>100</y>
+      <y>150</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -106,9 +111,9 @@
     <property name="geometry">
      <rect>
       <x>200</x>
-      <y>100</y>
+      <y>150</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -119,9 +124,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>140</y>
+      <y>210</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -132,9 +137,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>140</y>
+      <y>210</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -145,9 +150,9 @@
     <property name="geometry">
      <rect>
       <x>200</x>
-      <y>140</y>
+      <y>210</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -158,9 +163,9 @@
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>60</y>
+      <y>90</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
@@ -171,20 +176,33 @@
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>100</y>
+      <y>150</y>
       <width>80</width>
-      <height>22</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="text">
      <string>*</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="button_equal">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>210</y>
+      <width>80</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>=</string>
+    </property>
+   </widget>
    <widget class="QLabel" name="input_label">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>30</y>
+      <y>10</y>
       <width>57</width>
       <height>14</height>
      </rect>
@@ -197,7 +215,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>310</y>
+      <y>340</y>
       <width>57</width>
       <height>14</height>
      </rect>
@@ -209,10 +227,10 @@
    <widget class="QLCDNumber" name="output_lcd">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>300</y>
-      <width>141</width>
-      <height>23</height>
+      <x>90</x>
+      <y>330</y>
+      <width>240</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="smallDecimalPoint">
@@ -231,12 +249,11 @@
      <number>0</number>
     </property>
    </widget>
-
-    <widget class="QLabel" name="output_label_lcd">
+   <widget class="QLabel" name="output_label_lcd">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>350</y>
+      <y>400</y>
       <width>57</width>
       <height>14</height>
      </rect>
@@ -248,42 +265,20 @@
    <widget class="QLineEdit" name="output_infix">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>340</y>
-      <width>200</width>
-      <height>23</height>
+      <x>90</x>
+      <y>390</y>
+      <width>300</width>
+      <height>50</height>
      </rect>
     </property>
-    <!-- <property name="smallDecimalPoint">
-     <bool>true</bool>
-    </property> -->
-    <!-- <property name="digitCount">
-     <number>9</number>
-    </property>
-    <property name="segmentStyle">
-     <enum>QLCDNumber::Flat</enum>
-    </property>
-    <property name="value" stdset="0">
-     <double>0.000000000000000</double>
-    </property>
-    <property name="intValue" stdset="0">
-     <number>0</number>
-    </property> -->
-   </widget>
-   <widget class="QPushButton" name="button_equal">
-    <property name="geometry">
-     <rect>
-      <x>290</x>
-      <y>140</y>
-      <width>80</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>=</string>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
     </property>
    </widget>
   </widget>
+  
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -296,6 +291,8 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+
+ 
  
  <resources/>
  <connections/>
