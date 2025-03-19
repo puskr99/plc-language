@@ -22,7 +22,9 @@ class MainWindow(QMainWindow):
     button_plus:QPushButton
     button_multiply:QPushButton
     button_equal:QPushButton
+    button_clear:QPushButton
     input_text:QLineEdit
+
 
     output_infix: QLCDNumber
     output_lcd:QLCDNumber
@@ -49,6 +51,8 @@ class MainWindow(QMainWindow):
 
         self.button_plus.clicked.connect(lambda: self.push("+"))
         self.button_multiply.clicked.connect(lambda: self.push("*"))
+
+        self.button_clear.clicked.connect(lambda: self.input_text.clear())
 
         self.button_equal.clicked.connect(self.push_equal)
 

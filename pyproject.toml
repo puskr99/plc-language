@@ -26,5 +26,5 @@ cmd = "python main.py"
 working_dir = "compiler-starter-project"
 
 [tool.pdm.scripts.ui]
-cmd = "pyqt6-tools designer components/main.ui"
+cmd = "pyqt6-tools designer compiler-starter-project/components/main.ui"
 working_dir = "compiler-starter-project"
