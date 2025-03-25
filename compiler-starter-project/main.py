@@ -52,12 +52,16 @@ class MainWindow(QMainWindow):
         self.button_plus.clicked.connect(lambda: self.push("+"))
         self.button_multiply.clicked.connect(lambda: self.push("*"))
 
-        self.button_clear.clicked.connect(lambda: self.input_text.clear())
+        self.button_clear.clicked.connect(lambda: self.clear_all())
 
         self.button_equal.clicked.connect(self.push_equal)
 
         self.output_infix.setReadOnly(True)
 
+    def clear_all(self):
+        self.input_text.clear()
+        self.output_infix.clear()
+        self.output_lcd.display(0)
 
     def push_1(self):
         current_text:str = self.input_text.text()
