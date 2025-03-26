@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
     button_multiply:QPushButton
     button_equal:QPushButton
     button_clear:QPushButton
+    button_minus: QPushButton
     input_text:QLineEdit
 
 
@@ -51,6 +52,8 @@ class MainWindow(QMainWindow):
 
         self.button_plus.clicked.connect(lambda: self.push("+"))
         self.button_multiply.clicked.connect(lambda: self.push("*"))
+        self.button_minus.clicked.connect(lambda: self.push("-"))
+
 
         self.button_clear.clicked.connect(lambda: self.clear_all())
 

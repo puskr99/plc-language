@@ -277,7 +277,7 @@ QLabel {
      <string notr="true">NumberButtons</string>
     </attribute>
    </widget>
-   <widget class="QPushButton" name="button_decimal">
+   <widget class="QPushButton" name="button_minus">
     <property name="geometry">
      <rect>
       <x>220</x>
@@ -287,7 +287,7 @@ QLabel {
      </rect>
     </property>
     <property name="text">
-     <string>.</string>
+     <string>-</string>
     </property>
    </widget>
    <widget class="QPushButton" name="button_plus">
