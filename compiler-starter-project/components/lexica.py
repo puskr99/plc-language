@@ -30,7 +30,7 @@ class MyLexer(Lexer):
     ### EX1: simply define with regEX ###
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
     ### EX2: Define as a function ###
-    @_(r'\d+')
+    @_(r'-?\d+')
     def NUMBER(self, token):
         # Note that this function set parse token.value to integer
         token.value = int(token.value)

@@ -113,7 +113,7 @@ class PrefixParser(Parser):
     precedence = (
         ('left', "+", MINUS),
         ('left', TIMES, DIVIDE),
-        ('right', UMINUS),
+        # ('right', UMINUS),
     )
 
     def __init__(self, output_widget=None):
@@ -177,14 +177,14 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"({left} / {right})")
         return result
 
-    @_('MINUS expr %prec UMINUS')
-    def expr(self, p):
-        result = -p.expr
+    # @_('MINUS expr %prec UMINUS')
+    # def expr(self, p):
+    #     result = -p.expr
 
-        expr = self.infix_stack.pop()
+    #     expr = self.infix_stack.pop()
 
-        self.infix_stack.append(f"-{expr}")
-        return result
+    #     self.infix_stack.append(f"-{expr}")
+    #     return result
 
     @_('LPAREN expr RPAREN')
     def expr(self, p):
