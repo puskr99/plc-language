@@ -113,7 +113,7 @@ class PrefixParser(Parser):
     precedence = (
         ('left', "+", MINUS),
         ('left', TIMES, DIVIDE),
-        # ('right', UMINUS),
+        ('right', UMINUS),
     )
 
     def __init__(self, output_widget=None):
