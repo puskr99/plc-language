@@ -147,15 +147,15 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"({left} + {right})")
         return result
 
-    @_('MINUS expr expr')
-    def expr(self, p):
-        result = p.expr0 - p.expr1
+    # @_('MINUS expr expr')
+    # def expr(self, p):
+    #     result = p.expr0 - p.expr1
 
-        right = self.infix_stack.pop()
-        left = self.infix_stack.pop()
+    #     right = self.infix_stack.pop()
+    #     left = self.infix_stack.pop()
 
-        self.infix_stack.append(f"({left} - {right})")
-        return result
+    #     self.infix_stack.append(f"({left} - {right})")
+    #     return result
 
     @_('TIMES expr expr')
     def expr(self, p):
@@ -167,15 +167,15 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"({left} * {right})")
         return result
 
-    @_('DIVIDE expr expr')
-    def expr(self, p):
-        result = p.expr0 / p.expr1
+    # @_('DIVIDE expr expr')
+    # def expr(self, p):
+    #     result = p.expr0 / p.expr1
 
-        right = self.infix_stack.pop()
-        left = self.infix_stack.pop()
+    #     right = self.infix_stack.pop()
+    #     left = self.infix_stack.pop()
         
-        self.infix_stack.append(f"({left} / {right})")
-        return result
+    #     self.infix_stack.append(f"({left} / {right})")
+    #     return result
 
     @_('MINUS expr %prec UMINUS')
     def expr(self, p):
@@ -186,9 +186,9 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"-{expr}")
         return result
 
-    @_('LPAREN expr RPAREN')
-    def expr(self, p):
-        return p.expr
+    # @_('LPAREN expr RPAREN')
+    # def expr(self, p):
+    #     return p.expr
 
     @_('NUMBER')
     def expr(self, p):
