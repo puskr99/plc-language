@@ -11,7 +11,7 @@ The PLC Prefix Calculator is a tool designed to accept prefix expressions as inp
 ---
 
 ## How to Run
-
+Developed in an ubuntu environment. So might need some adjustments to run in other OS.
 ### Running in Remote Container
 Follow these steps to get started:
 
