@@ -2,7 +2,7 @@
 
 **Author:** Puskar Adhikari  
 **Student ID:** st125098  
-**Guthub URL:** https://github.com/puskr99/plc-calculator
+**Github URL:** https://github.com/puskr99/plc-calculator
 
 
 ## Overview
