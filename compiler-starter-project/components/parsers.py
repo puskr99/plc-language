@@ -113,7 +113,7 @@ class PrefixParser(Parser):
     precedence = (
         ('left', "+", MINUS),
         ('left', TIMES, DIVIDE),
-        ('right', UMINUS),
+        # ('right', UMINUS),
     )
 
     def __init__(self, output_widget=None):
@@ -131,12 +131,14 @@ class PrefixParser(Parser):
         value = p.expr
         self.memory.set(variable_name=var_name, value=value, data_type=type(value))
         self.infix_stack = [f"{var_name} = {self.infix_stack[0]}"]  # Update infix with assignment
-
+    
+    # S -> E
     @_('expr')
     def statement(self, p) -> int:
         result = p.expr
         return result
 
+    # E -> + E E
     @_('"+" expr expr')
     def expr(self, p):
         result = p.expr0 + p.expr1
@@ -147,16 +149,8 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"({left} + {right})")
         return result
 
-    # @_('MINUS expr expr')
-    # def expr(self, p):
-    #     result = p.expr0 - p.expr1
 
-    #     right = self.infix_stack.pop()
-    #     left = self.infix_stack.pop()
-
-    #     self.infix_stack.append(f"({left} - {right})")
-    #     return result
-
+    # E -> * E E
     @_('TIMES expr expr')
     def expr(self, p):
         result = p.expr0 * p.expr1
@@ -167,34 +161,22 @@ class PrefixParser(Parser):
         self.infix_stack.append(f"({left} * {right})")
         return result
 
-    # @_('DIVIDE expr expr')
+    # @_('MINUS expr %prec UMINUS')
     # def expr(self, p):
-    #     result = p.expr0 / p.expr1
+    #     result = -p.expr
 
-    #     right = self.infix_stack.pop()
-    #     left = self.infix_stack.pop()
-        
-    #     self.infix_stack.append(f"({left} / {right})")
+    #     expr = self.infix_stack.pop()
+
+    #     self.infix_stack.append(f"-{expr}")
     #     return result
 
-    @_('MINUS expr %prec UMINUS')
-    def expr(self, p):
-        result = -p.expr
-
-        expr = self.infix_stack.pop()
-
-        self.infix_stack.append(f"-{expr}")
-        return result
-
-    # @_('LPAREN expr RPAREN')
-    # def expr(self, p):
-    #     return p.expr
-
+    # E -> number
     @_('NUMBER')
     def expr(self, p):
         num = int(p.NUMBER)
         self.infix_stack.append(str(num))
         return num
+
 
     def parse(self, tokens):
         self.infix_stack = []  # reset
