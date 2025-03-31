@@ -2,6 +2,8 @@
 
 **Author:** Puskar Adhikari  
 **Student ID:** st125098  
+**Guthub URL:** https://github.com/puskr99/plc-calculator
+
 
 ## Overview
 The PLC Prefix Calculator is a tool designed to accept prefix expressions as input, convert them into infix notation, and evaluate the result. The application provides a user-friendly GUI developed with PyQt6 and Qt Designer.
