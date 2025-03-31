@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QPushButton, QLCDNumber
 
 from components.lexica import MyLexer
-from components.parsers import MyParser, PrefixParser
+from components.parsers import PrefixParser
 from components.memory import Memory
 
 class MainWindow(QMainWindow):
