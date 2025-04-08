@@ -22,9 +22,12 @@ license = {text = "MIT"}
 distribution = false
 
 [tool.pdm.scripts.app]
-cmd = "python main.py"
+cmd = "python main_language.py"
 working_dir = "compiler-starter-project"
 
 [tool.pdm.scripts.ui]
-cmd = "pyqt6-tools designer compiler-starter-project/components/main.ui"
+cmd = "pyqt6-tools designer compiler-starter-project/components/main_language.ui"
 working_dir = "compiler-starter-project"
+
+## using designer 
+## export PATH=$PATH:./.venv/lib/python3.9/site-packages/qt6_applications/Qt/bin

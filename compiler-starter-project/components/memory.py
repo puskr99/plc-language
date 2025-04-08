@@ -32,6 +32,9 @@ class Memory:
         string += "-"*30+"\n"
         return string
 
+    def reset_memory(self):
+        self.memory.clear()
+
 if __name__ == "__main__":
     memory = Memory()
     memory.set(variable_name='a', value=10, data_type=int)
