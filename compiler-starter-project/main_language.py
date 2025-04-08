@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.clear_button.clicked.connect(self.output_console.clear)
 
     def execute_code(self):
+        self.output_console.clear()
         print("Running code...")
         parser = ASTParser()
         memory = Memory()
@@ -39,9 +40,10 @@ class MainWindow(QMainWindow):
             # Parse and execute the code
             tokens = lexer.tokenize(input_text)
             result = parser.parse(tokens)
-
+            
             # Display results in the output console
-            self.output_console.append(str(result))
+            for val in result:
+                self.output_console.append(str(val))
 
         except Exception as e:
             # Handle and display any errors
