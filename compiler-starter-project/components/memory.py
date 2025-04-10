@@ -9,53 +9,52 @@ def singleton(cls):
 @singleton
 class Memory:
 
-    def __init__(self) -> None:
-        self.memory:dict = dict({})
+    def __init__(self):
+        # Stack of scopes: each scope is a dict of {var_name: (value, data_type)}
+        self.scopes = [{}]  # Start with global scope
+        # Separate storage for functions
         self.functions = {}
-    
-    # def get(self, variable_name:str) -> object:
-    #     assert variable_name in self.memory, f"{variable_name=} not exist in Memory"
-    #     return self.memory[variable_name]
-    
-    # def set(self, variable_name:str, value:object, data_type:str):
-    #     # I decide to crash when variable name is exist in the memory
-    #     assert variable_name not in self.memory
-    #     self.memory[variable_name] = {"value": value, "data_type": data_type}
+        self.memory = {}
 
-    # def __repr__(self) -> str:
-    #     string = ""
-    #     string += f"Name\tValue\tData Type\n"
-    #     string += "-"*30+"\n"
-    #     for var, data in self.memory.items():
-    #         value = data["value"]
-    #         data_type = data["data_type"]
-    #         string += f"{var}\t{value}\t{data_type}\n"
-    #     string += "-"*30+"\n"
-    #     return string
+    def enter_scope(self):
+        """Push a new scope onto the stack (e.g., entering a function or block)."""
+        self.scopes.append({})
+
+    def exit_scope(self):
+        """Pop the current scope off the stack (e.g., leaving a function or block)."""
+        if len(self.scopes) > 1:  # Don’t remove global scope
+            self.scopes.pop()
 
     def set(self, variable_name, value, data_type):
-        self.memory[variable_name] = {'value': value, 'type': data_type}
+        """Set a variable in the current (topmost) scope."""
+        self.scopes[-1][variable_name] = (value, data_type)
 
     def get(self, variable_name):
-        if variable_name in self.memory:
-            return self.memory[variable_name]['value']
-        else:
-            raise ValueError(f"Variable '{variable_name}' is not defined.")
-    
-    def set_function(self, name, body):
-        if name in self.functions:
-            raise ValueError(f"Function '{name}' already defined.")
-        self.functions[name] = body  # Store the function body in memory
+        """Look up a variable, starting from the current scope and moving outward."""
+        for scope in reversed(self.scopes):  # Check local scope first, then global
+            if variable_name in scope:
+                return scope[variable_name][0]  # Return the value
+        raise ValueError(f"Undefined variable: {variable_name}")
 
-    def get_function(self, name):
-        return self.functions.get(name, None)  # Retrieve the function body by name
+    def is_declared(self, variable_name):
+        """Check if a variable is declared in the current scope."""
+        return variable_name in self.scopes[-1]
+
+    def set_function(self, function_name, body):
+        """Store a function in the global scope."""
+        self.functions[function_name] = body
+
+    def get_function(self, function_name):
+        """Retrieve a function’s body."""
+        return self.functions.get(function_name)
 
     def __contains__(self, variable_name):
         return variable_name in self.memory
 
     def reset_memory(self):
-        self.memory.clear()
-        self.functions.clear()
+        self.memory = {}
+        self.functions = {}
+        self.scopes = [{}]
 
 
 if __name__ == "__main__":

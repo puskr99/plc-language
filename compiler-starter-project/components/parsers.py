@@ -38,14 +38,13 @@ class ASTParser(Parser):
         print("Single statement without semicolon")
         return [p.statement]
 
-    # Rule to handle variable declarations with any type (int, float, bool, string)
     @_('type IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
         print("type variable = value", p.expr)
         var_name = p.IDENTIFIER
         value = p.expr
-        if var_name in self.memory:
-            raise ValueError(f"Variable '{var_name}' already declared.")
+        if self.memory.is_declared(var_name):
+            raise ValueError(f"Variable '{var_name}' already declared in this scope.")
         self.memory.set(variable_name=var_name, value=value, data_type=type(value))
         return ('declare', var_name, value)
 
@@ -84,15 +83,6 @@ class ASTParser(Parser):
             return ""
         else:
             return None  # Fallback for unsupported types
-
-
-    # Rule for print statement (e.g., print(1 + 2);)
-    @_('PRINT LPAREN expr RPAREN SEMICOLON')
-    def statement(self, p):
-        value = p.expr  # Get the evaluated value of the expression
-        print("Print called with ",value)  # Print the result
-        self.output_widget.append("-> " + str(value))
-        return ('print', value)  # Return a tuple representing the print statement
     
 
     # General rule for addition and string concatenation
@@ -133,7 +123,7 @@ class ASTParser(Parser):
 
     @_('STRING_LITERAL')
     def expr(self, p):
-        return p.STRING_LITERAL.strip('"')  # Remove quotes from string literals
+        return p.STRING_LITERAL#.strip('"')  # Remove quotes from string literals
 
     # Define rule for variable type (int, float, bool, string)
     @_('TYPE_INT') 
@@ -158,24 +148,21 @@ class ASTParser(Parser):
     def expr(self, p):
         var_name = p.IDENTIFIER
         print("Variable: ", var_name)
-        if var_name in self.memory:
-            return self.memory.get(var_name)  # Look up the value of the variable from memory
-        else:
-            raise ValueError(f"Undefined variable: {var_name}")
+        # if var_name in self.memory:
+        return self.memory.get(var_name)  # Looks up in current or outer scopes
+        # else:
+            # raise ValueError(f'Undefined variable: {var_name}')
     
     # a = 2
     @_('IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
         var_name = p.IDENTIFIER
         print("Statement ", var_name)
-
-        if var_name not in self.memory:
-            raise ValueError(f"Variable {var_name} not declared.")  # Ensure variable is declared
-
-        value = p.expr  # The value to assign
-        self.memory.set(variable_name=var_name, value=value, data_type=type(value))  # Update memory
+        value = p.expr
+        # Check if variable exists in any scope before updating
+        self.memory.get(var_name)  # Raises error if undefined
+        self.memory.set(variable_name=var_name, value=value, data_type=type(value))
         return ('update', var_name, value)
-
 
     # Parenthesized expression rule
     # @_('LPAREN expr RPAREN')
@@ -209,73 +196,80 @@ class ASTParser(Parser):
         return p.expr0 != p.expr1
     
 
-    # If-Else rule
-    @_('IF LPAREN expr RPAREN LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
-    def statement(self, p):
-        print("Inside If condiditon")
-        condition = p.expr  # The condition to evaluate (p.expr will be the expression)
-        if condition:  # Evaluate the condition
-            print("Executing 'if' block")
-            self.execute_statement(p.statements0)  # Execute the 'if' block (p.statements0 contains the list of statements)
-        else:
-            print("Executing 'else' block")
-            self.execute_statement(p.statements1)  # Execute the 'else' block (p.statements1 contains the list of statements)
-
-
-    # If statement with block (e.g., if (a < b) { print(a); })
     @_('IF LPAREN expr RPAREN LBRACE statements RBRACE')
     def statement(self, p):
         print("Processing if with block")
+        condition = self.evaluate_expr(p.expr)
+        if condition:
+            self.memory.enter_scope()
+            self.execute_statement(p.statements)
+            self.memory.exit_scope()
         return ('if_block', p.expr, p.statements)
 
-
-    # while statement
     @_('WHILE LPAREN expr RPAREN LBRACE statements RBRACE')
     def statement(self, p):
         print("Processing while block")
+        condition = self.evaluate_expr(p.expr)
+        while condition:
+            self.memory.enter_scope()
+            self.execute_statement(p.statements)
+            self.memory.exit_scope()
+            condition = self.evaluate_expr(p.expr)
         return ('while_block', p.expr, p.statements)
 
 
-    # Helper method to execute statements
+    @_('FUNCTION IDENTIFIER LPAREN RPAREN LBRACE statements RBRACE')
+    def statement(self, p):
+        print(f"Defining function {p.IDENTIFIER}")
+        self.memory.enter_scope()  # Enter function scope
+        function_body = p.statements  # Parse the body in this scope
+        self.memory.set_function(p.IDENTIFIER, function_body)
+        self.memory.exit_scope()  # Exit scope after parsing
+        return ('function', p.IDENTIFIER)
+
+
+    @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
+    def statement(self, p):
+        function_name = p.IDENTIFIER
+        print(f"Calling function {function_name}")
+        function_body = self.memory.get_function(function_name)
+        if function_body:
+            self.memory.enter_scope()  # Enter new scope for execution
+            # self.execute_statement(function_body)  # Execute with local scope
+            self.memory.exit_scope()  # Exit scope after execution
+        else:
+            raise ValueError(f"Function '{function_name}' is not defined.")
+        return ('call', function_name)
+
+
     def execute_statement(self, stmt):
         if isinstance(stmt, list):
             for s in stmt:
                 self.execute_statement(s)
         elif isinstance(stmt, tuple):
-            if stmt[0] == 'declare':
-                var_name, value = stmt[1], stmt[2]
-                self.memory.set(variable_name=var_name, value=value, data_type=type(value))
-            elif stmt[0] == 'update':
-                var_name, value = stmt[1], stmt[2]
-                self.memory.set(variable_name=var_name, value=value, data_type=type(value))
-            elif stmt[0] == 'print':
-                print("I am here from fucntion call")
+            if stmt[0] == 'print':
                 value = self.evaluate_expr(stmt[1])
-                print(value)
-                # self.output_widget.append("-> "+ str(value))
-            elif stmt[0] == 'if':
-                condition = self.evaluate_expr(stmt[1])
-                if condition:
-                    self.execute_statement(stmt[2])
-            elif stmt[0] == 'if_block':
-                condition = self.evaluate_expr(stmt[1])
-                if condition:
-                    for s in stmt[2]:
-                        self.execute_statement(s)
-            elif stmt[0] == 'while_block':
-                condition = self.evaluate_expr(stmt[1])
-                while condition:
-                    for s in stmt[2]:
-                        self.execute_statement(s)
-                    condition = self.evaluate_expr(stmt[1])  # Re-evaluate condition each iteration
-
+                self.output_widget.append("-> "+str(value))
+            elif stmt[0] == 'call':
+                function_name = stmt[1]
+                function_body = self.memory.get_function(function_name)
+                if function_body:
+                    self.memory.enter_scope()
+                    self.execute_statement(function_body)
+                    self.memory.exit_scope()
+                else:
+                    raise ValueError(f"Function '{function_name}' is not defined.")
 
     # Helper method to evaluate expressions at execution time
     def evaluate_expr(self, expr):
-        if isinstance(expr, str):  # Identifier
-            if expr in self.memory:
-                return self.memory.get(expr)
-            raise ValueError(f"Undefined variable: {expr}")
+    # Case 1: String literal (starts and ends with quotes)
+        if isinstance(expr, str) and expr.startswith('"') and expr.endswith('"'):
+            return expr[1:-1]  # Strip the quotes and return the string literal
+        
+        # Case 2: Variable name
+        if isinstance(expr, str) and expr in self.memory.variables:
+            return self.memory.get(expr)  # Retrieve the variable value from memory
+    
         elif isinstance(expr, (int, float, bool, str)):  # Literal value
             return expr
         elif isinstance(expr, tuple):  # Binary operation or comparison
@@ -288,40 +282,21 @@ class ASTParser(Parser):
                 right = self.evaluate_expr(expr[2])
                 return left + right
         return expr
-
-
-    # Execute all statements after parsing
-    def execute(self, ast):
-        if isinstance(ast, list):
-            for stmt in ast:
-                self.execute_statement(stmt)
-
-
-    # Rule for defining functions
-    @_('FUNCTION IDENTIFIER LPAREN RPAREN LBRACE statements RBRACE')
-    def statement(self, p):
-        print(f"Defining function {p.IDENTIFIER}")
-        # Store the function's body (statements inside the curly braces)
-        self.memory.set_function(p.IDENTIFIER, p.statements)
-        return ('function', p.IDENTIFIER, p.statements)
-
-    # Rule for calling a function
-    @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
-    def statement(self, p):
-        function_name = p.IDENTIFIER
-        print(f"Calling function {function_name}")
-        # Get the function body from memory
-        function_body = self.memory.get_function(function_name)
-        print("Function body ", function_body)
-        if function_body:
-            self.execute_statement(function_body)  # Execute the function's body
-        else:
-            raise ValueError(f"Function '{function_name}' is not defined.")
-        return None
     
-    # def parse(self,tokens,  output_widget = None):
-    #     super().parse(tokens)
+    @_('PRINT LPAREN expr RPAREN SEMICOLON')
+    def statement(self, p):
+        value = p.expr
+        if isinstance(value, str) and value.startswith('"') and value.endswith('"'):
+            value =  value[1:-1]  # Strip the quotes and return the string literal
+        # self.output_widget.append("-> " + str(value))
+        return ('print', p.expr)  # Always return the AST representation
 
+    # # Execute all statements after parsing
+    def execute(self, ast):
+        print("List is ", ast)
+        if isinstance(ast, list):
+            for stmt in (ast):
+                self.execute_statement(stmt)
 
 if __name__ == "__main__":
     lexer = Lexer()  # Initialize Lexer

@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
             # Parse and execute the code
             tokens = lexer.tokenize(input_text)
             result = parser.parse(tokens)
+            parser.execute(result)
             
             # Display results in the output console
             # for val in result:
