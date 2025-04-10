@@ -43,9 +43,10 @@ class ASTParser(Parser):
         print("type variable = value", p.expr)
         var_name = p.IDENTIFIER
         value = p.expr
-        if self.memory.is_declared(var_name):
-            raise ValueError(f"Variable '{var_name}' already declared in this scope.")
-        self.memory.set(variable_name=var_name, value=value, data_type=type(value))
+        # print("Scope is", self.memory.scopes)
+        # if self.memory.is_declared(var_name):
+        #     raise ValueError(f"Variable '{var_name}' already declared in this scope.")
+        # self.memory.set(variable_name=var_name, value=value, data_type=type(value))
         return ('declare', var_name, value)
 
     # Single or multiple variable declarations without assignments (e.g., int a; or int a, b, c;)
@@ -88,12 +89,7 @@ class ASTParser(Parser):
     # General rule for addition and string concatenation
     @_('expr PLUS expr')
     def expr(self, p):
-        if isinstance(p.expr0, str) and isinstance(p.expr1, str):
-            return p.expr0 + p.expr1  # String concatenation
-        elif isinstance(p.expr0, (int, float)) and isinstance(p.expr1, (int, float)):
-            return p.expr0 + p.expr1  # Numerical addition
-        else:
-            raise TypeError(f"Unsupported operands: {type(p.expr0)} + {type(p.expr1)}")
+        return ('plus', p.expr0, p.expr1)
 
 
     @_('expr MINUS expr')
@@ -123,7 +119,7 @@ class ASTParser(Parser):
 
     @_('STRING_LITERAL')
     def expr(self, p):
-        return p.STRING_LITERAL#.strip('"')  # Remove quotes from string literals
+        return p.STRING_LITERAL #.strip('"')  # Remove quotes from string literals
 
     # Define rule for variable type (int, float, bool, string)
     @_('TYPE_INT') 
@@ -148,10 +144,12 @@ class ASTParser(Parser):
     def expr(self, p):
         var_name = p.IDENTIFIER
         print("Variable: ", var_name)
+        # return ('identifier', var_name)
         # if var_name in self.memory:
-        return self.memory.get(var_name)  # Looks up in current or outer scopes
+        #     return self.memory.get(var_name)  # Looks up in current or outer scopes
         # else:
-            # raise ValueError(f'Undefined variable: {var_name}')
+        #     raise ValueError(f'Hi! Undefined variable: {var_name}')
+        return var_name
     
     # a = 2
     @_('IDENTIFIER ASSIGN expr SEMICOLON')
@@ -160,8 +158,8 @@ class ASTParser(Parser):
         print("Statement ", var_name)
         value = p.expr
         # Check if variable exists in any scope before updating
-        self.memory.get(var_name)  # Raises error if undefined
-        self.memory.set(variable_name=var_name, value=value, data_type=type(value))
+        # self.memory.get(var_name)  # Raises error if undefined
+        # self.memory.set(variable_name=var_name, value=value, data_type=type(value))
         return ('update', var_name, value)
 
     # Parenthesized expression rule
@@ -233,13 +231,15 @@ class ASTParser(Parser):
         function_name = p.IDENTIFIER
         print(f"Calling function {function_name}")
         function_body = self.memory.get_function(function_name)
-        if function_body:
-            self.memory.enter_scope()  # Enter new scope for execution
-            # self.execute_statement(function_body)  # Execute with local scope
-            self.memory.exit_scope()  # Exit scope after execution
-        else:
-            raise ValueError(f"Function '{function_name}' is not defined.")
-        return ('call', function_name)
+        # if function_body:
+        #     print("Entered scope")
+        #     self.memory.enter_scope()  # Enter new scope for execution
+        #     # self.execute_statement(function_body)  # Execute with local scope
+        #     print("Exited scope")
+        #     self.memory.exit_scope()  # Exit scope after execution
+        # else:
+        #     raise ValueError(f"Function '{function_name}' is not defined.")
+        return ('call', function_name, function_body)
 
 
     def execute_statement(self, stmt):
@@ -247,9 +247,34 @@ class ASTParser(Parser):
             for s in stmt:
                 self.execute_statement(s)
         elif isinstance(stmt, tuple):
-            if stmt[0] == 'print':
+            if stmt[0] == 'declare':
+                var_name, value = stmt[1], stmt[2]
+                # Only set if not already set globally during parsing
+                if var_name not in self.memory.scopes[0]:  # Skip global declarations
+                    if self.memory.is_declared(var_name):
+                        raise ValueError(f"Variable '{var_name}' already declared in this scope.")
+                    self.memory.set(variable_name=var_name, value=value, data_type=type(value))
+            
+            elif stmt[0] == 'update':
+                var_name, value = stmt[1], stmt[2]
+                # Only set if not already set globally during parsing
+                # if var_name not in self.memory.scopes[0]:  # Skip global declarations
+                if not self.memory.is_declared(var_name):
+                    raise ValueError(f"Variable '{var_name}' not declared.")
+                self.memory.set(variable_name=var_name, value=value, data_type=type(value))
+
+            elif stmt[0] == 'print':
                 value = self.evaluate_expr(stmt[1])
                 self.output_widget.append("-> "+str(value))
+
+            # elif stmt[0] == "plus":
+            #     if isinstance(stmt[1], str) and isinstance(stmt[2], str):
+            #         return stmt[1] + stmt[2]  # String concatenation
+            #     elif isinstance(stmt[1], (int, float)) and isinstance(stmt[2], (int, float)):
+            #         return stmt[1] + stmt[2]  # Numerical addition
+            #     else:
+            #         raise TypeError(f"Unsupported operands: {type(stmt[1])} + {type(stmt[2])}")
+
             elif stmt[0] == 'call':
                 function_name = stmt[1]
                 function_body = self.memory.get_function(function_name)
@@ -260,6 +285,7 @@ class ASTParser(Parser):
                 else:
                     raise ValueError(f"Function '{function_name}' is not defined.")
 
+
     # Helper method to evaluate expressions at execution time
     def evaluate_expr(self, expr):
     # Case 1: String literal (starts and ends with quotes)
@@ -267,10 +293,11 @@ class ASTParser(Parser):
             return expr[1:-1]  # Strip the quotes and return the string literal
         
         # Case 2: Variable name
-        if isinstance(expr, str) and expr in self.memory.variables:
+        if isinstance(expr, str): # and expr in self.memory.is_declared(expr):
             return self.memory.get(expr)  # Retrieve the variable value from memory
     
         elif isinstance(expr, (int, float, bool, str)):  # Literal value
+            print("I should be here bro")
             return expr
         elif isinstance(expr, tuple):  # Binary operation or comparison
             if expr[0] == '<':
