@@ -13,8 +13,9 @@ class ASTParser(Parser):
         ('nonassoc', 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'),
     )
 
-    def __init__(self):
+    def __init__(self, output_widget = None):
         self.memory = Memory()
+        self.output_widget = output_widget
 
     # Rule for handling multiple statements
     @_('statement SEMICOLON statements')
@@ -38,7 +39,7 @@ class ASTParser(Parser):
         return [p.statement]
 
     # Rule to handle variable declarations with any type (int, float, bool, string)
-    @_('type IDENTIFIER ASSIGN expr')
+    @_('type IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
         print("type variable = value", p.expr)
         var_name = p.IDENTIFIER
@@ -49,7 +50,7 @@ class ASTParser(Parser):
         return ('declare', var_name, value)
 
     # Single or multiple variable declarations without assignments (e.g., int a; or int a, b, c;)
-    @_('type ident_list')
+    @_('type ident_list SEMICOLON')
     def statement(self, p):
         print("type variables without value")
         # Process each identifier in the list
@@ -61,7 +62,7 @@ class ASTParser(Parser):
             self.memory.set(variable_name=var_name, value=default_value, data_type=p.type)
             declarations.append(('declare', var_name, default_value))
         return declarations if len(declarations) > 1 else declarations[0]
-
+    
     # List of identifiers (e.g., a or a, b, c)
     @_('IDENTIFIER')
     def ident_list(self, p):
@@ -86,10 +87,11 @@ class ASTParser(Parser):
 
 
     # Rule for print statement (e.g., print(1 + 2);)
-    @_('PRINT LPAREN expr RPAREN')
+    @_('PRINT LPAREN expr RPAREN SEMICOLON')
     def statement(self, p):
         value = p.expr  # Get the evaluated value of the expression
         print("Print called with ",value)  # Print the result
+        self.output_widget.append("-> " + str(value))
         return ('print', value)  # Return a tuple representing the print statement
     
 
@@ -162,7 +164,7 @@ class ASTParser(Parser):
             raise ValueError(f"Undefined variable: {var_name}")
     
     # a = 2
-    @_('IDENTIFIER ASSIGN expr')
+    @_('IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
         var_name = p.IDENTIFIER
         print("Statement ", var_name)
@@ -176,10 +178,9 @@ class ASTParser(Parser):
 
 
     # Parenthesized expression rule
-    @_('LPAREN expr RPAREN')
-    def expr(self, p):
-        return p.expr  # Return the expression inside parentheses
-    
+    # @_('LPAREN expr RPAREN')
+    # def expr(self, p):
+    #     return p.expr  # Return the expression inside parentheses
 
     # Rules for comparison expressions
     @_('expr LT expr')  # Less than
@@ -220,17 +221,20 @@ class ASTParser(Parser):
             print("Executing 'else' block")
             self.execute_statement(p.statements1)  # Execute the 'else' block (p.statements1 contains the list of statements)
 
+
     # If statement with block (e.g., if (a < b) { print(a); })
     @_('IF LPAREN expr RPAREN LBRACE statements RBRACE')
     def statement(self, p):
         print("Processing if with block")
         return ('if_block', p.expr, p.statements)
 
+
     # while statement
     @_('WHILE LPAREN expr RPAREN LBRACE statements RBRACE')
     def statement(self, p):
         print("Processing while block")
         return ('while_block', p.expr, p.statements)
+
 
     # Helper method to execute statements
     def execute_statement(self, stmt):
@@ -245,8 +249,10 @@ class ASTParser(Parser):
                 var_name, value = stmt[1], stmt[2]
                 self.memory.set(variable_name=var_name, value=value, data_type=type(value))
             elif stmt[0] == 'print':
+                print("I am here from fucntion call")
                 value = self.evaluate_expr(stmt[1])
                 print(value)
+                # self.output_widget.append("-> "+ str(value))
             elif stmt[0] == 'if':
                 condition = self.evaluate_expr(stmt[1])
                 if condition:
@@ -283,11 +289,38 @@ class ASTParser(Parser):
                 return left + right
         return expr
 
+
     # Execute all statements after parsing
     def execute(self, ast):
         if isinstance(ast, list):
             for stmt in ast:
                 self.execute_statement(stmt)
+
+
+    # Rule for defining functions
+    @_('FUNCTION IDENTIFIER LPAREN RPAREN LBRACE statements RBRACE')
+    def statement(self, p):
+        print(f"Defining function {p.IDENTIFIER}")
+        # Store the function's body (statements inside the curly braces)
+        self.memory.set_function(p.IDENTIFIER, p.statements)
+        return ('function', p.IDENTIFIER, p.statements)
+
+    # Rule for calling a function
+    @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
+    def statement(self, p):
+        function_name = p.IDENTIFIER
+        print(f"Calling function {function_name}")
+        # Get the function body from memory
+        function_body = self.memory.get_function(function_name)
+        print("Function body ", function_body)
+        if function_body:
+            self.execute_statement(function_body)  # Execute the function's body
+        else:
+            raise ValueError(f"Function '{function_name}' is not defined.")
+        return None
+    
+    # def parse(self,tokens,  output_widget = None):
+    #     super().parse(tokens)
 
 
 if __name__ == "__main__":

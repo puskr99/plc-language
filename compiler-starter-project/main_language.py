@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
     def execute_code(self):
         self.output_console.clear()
         print("Running code...")
-        parser = ASTParser()
+        parser = ASTParser(self.output_console)
         memory = Memory()
 
         # Retrieve the input code
@@ -42,8 +42,8 @@ class MainWindow(QMainWindow):
             result = parser.parse(tokens)
             
             # Display results in the output console
-            for val in result:
-                self.output_console.append(str(val))
+            # for val in result:
+            #     self.output_console.append(str(val))
 
         except Exception as e:
             # Handle and display any errors

@@ -11,6 +11,7 @@ class Memory:
 
     def __init__(self) -> None:
         self.memory:dict = dict({})
+        self.functions = {}
     
     # def get(self, variable_name:str) -> object:
     #     assert variable_name in self.memory, f"{variable_name=} not exist in Memory"
@@ -40,13 +41,21 @@ class Memory:
             return self.memory[variable_name]['value']
         else:
             raise ValueError(f"Variable '{variable_name}' is not defined.")
+    
+    def set_function(self, name, body):
+        if name in self.functions:
+            raise ValueError(f"Function '{name}' already defined.")
+        self.functions[name] = body  # Store the function body in memory
+
+    def get_function(self, name):
+        return self.functions.get(name, None)  # Retrieve the function body by name
 
     def __contains__(self, variable_name):
         return variable_name in self.memory
 
-
     def reset_memory(self):
         self.memory.clear()
+        self.functions.clear()
 
 
 if __name__ == "__main__":

@@ -6,13 +6,14 @@ class Lexer(Lexer):
         PRINT, TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING,
         BOOL_LITERAL, STRING_LITERAL, FLOAT_LITERAL, INT_LITERAL, IDENTIFIER,
         ASSIGN, SEMICOLON, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, LBRACE, RBRACE,
-        FOR, LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE
+        FOR, LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE, FUNCTION
     }
 
     # Ignore spaces and tabs
     ignore = ' \t\n'
 
     # Define token patterns
+    FUNCTION = r'function'
     PRINT = r'print'
     TYPE_INT = r'int'
     TYPE_FLOAT = r'float'
