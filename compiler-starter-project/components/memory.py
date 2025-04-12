@@ -35,9 +35,22 @@ class Memory:
             if variable_name in scope:
                 return scope[variable_name][0]  # Return the value
         raise ValueError(f"Undefined variable: {variable_name}")
+    
+    def update(self, variable_name, value, data_type):
+        print(f"Updating {variable_name} to {value}, scopes: {self.scopes}")
+        for scope in reversed(self.scopes):
+            if variable_name in scope:
+                scope[variable_name] = (value, data_type)
+                return
+        raise ValueError(f"Variable '{variable_name}' not declared")
 
     def is_declared(self, variable_name):
-        """Check if a variable is declared in the current scope."""
+        for scope in reversed(self.scopes):
+            if variable_name in scope:
+                return True
+        return False
+    
+    def is_declared_in_current_scope(self, variable_name):
         return variable_name in self.scopes[-1]
 
     def set_function(self, function_name, body):
