@@ -56,7 +56,7 @@ class ASTParser(Parser):
     # Print statement: print(expr);
     @_('PRINT LPAREN expr RPAREN SEMICOLON')
     def statement(self, p):
-        return ('print', p.expr)
+        return ('print', p.expr, p.lineno)
 
     # If statement: if (expr) { statements }
     @_('IF LPAREN expr RPAREN LBRACE statements RBRACE')
@@ -247,8 +247,9 @@ class ASTParser(Parser):
 
             elif op == 'print':
                 value = self.evaluate_expr(stmt[1])
+                line_no = stmt[2]
                 if self.output_widget:
-                    self.output_widget.append("-> " + str(value))
+                    self.output_widget.append(f"-> Print Line {stmt[2]}: " + str(value))
 
             elif op == 'if':
                 condition = self.evaluate_expr(stmt[1])

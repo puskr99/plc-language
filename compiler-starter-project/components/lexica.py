@@ -10,7 +10,11 @@ class Lexer(Lexer):
     }
 
     # Ignore spaces and tabs
-    ignore = ' \t\n'
+    ignore = ' \t'
+
+    @_(r'\n+')
+    def newline(self, t):
+        self.lineno += len(t.value)
 
     # Define token patterns
     FUNCTION = r'function'
