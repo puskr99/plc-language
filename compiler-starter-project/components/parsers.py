@@ -72,6 +72,11 @@ class ASTParser(Parser):
     def statement(self, p):
         return ('if', p.expr, p.statements)
 
+    # If statement: if (expr) { statements } else {statements}
+    @_('IF LPAREN expr RPAREN LBRACE statements RBRACE ELSE LBRACE statements RBRACE')
+    def statement(self, p):
+        return ('if_else', p.expr, p.statements0, p.statements1)
+
     # While statement: while (expr) { statements }
     @_('WHILE LPAREN expr RPAREN LBRACE statements RBRACE')
     def statement(self, p):
@@ -330,6 +335,18 @@ class ASTParser(Parser):
                 if condition:
                     self.memory.enter_scope()
                     self.execute_statement(stmt[2])
+                    self.memory.exit_scope()
+            
+            elif op == 'if_else':
+                print("Inside IF ESLE")
+                condition = self.evaluate_expr(stmt[1])
+                if condition:
+                    self.memory.enter_scope()
+                    self.execute_statement(stmt[2])
+                    self.memory.exit_scope()
+                else:
+                    self.memory.enter_scope()
+                    self.execute_statement(stmt[3])
                     self.memory.exit_scope()
 
             elif op == 'while':
