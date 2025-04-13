@@ -6,7 +6,7 @@ class Lexer(Lexer):
         PRINT, TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING,
         BOOL_LITERAL, STRING_LITERAL, FLOAT_LITERAL, INT_LITERAL, IDENTIFIER,
         ASSIGN, SEMICOLON, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, LBRACE, RBRACE,
-        FOR, LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE, FUNCTION
+        FOR, LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE, FUNCTION, CONST
     }
 
     # Ignore spaces and tabs
@@ -44,6 +44,7 @@ class Lexer(Lexer):
     FLOAT_LITERAL = r'-?\d+\.\d+'
     INT_LITERAL = r'-?\d+'
     MINUS = r'-'
+    CONST = r'const'
     IF = r'if'
     ELSE = r'else'
     COMMA = r','

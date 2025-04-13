@@ -15,6 +15,8 @@ class Memory:
         # Separate storage for functions
         self.functions = {}
         self.memory = {}
+        self.constants = set()
+
 
     def enter_scope(self):
         """Push a new scope onto the stack (e.g., entering a function or block)."""
@@ -25,23 +27,42 @@ class Memory:
         if len(self.scopes) > 1:  # Don’t remove global scope
             self.scopes.pop()
 
-    def set(self, variable_name, value, data_type):
-        """Set a variable in the current (topmost) scope."""
+    def set(self, variable_name, value, data_type, is_constant=False):
+        """Set the varibale at topmost scope"""
         self.scopes[-1][variable_name] = (value, data_type)
+        if is_constant:
+            self.constants.add(variable_name)
 
     def get(self, variable_name):
-        """Look up a variable, starting from the current scope and moving outward."""
-        for scope in reversed(self.scopes):  # Check local scope first, then global
-            if variable_name in scope:
-                return scope[variable_name][0]  # Return the value
-        raise ValueError(f"Undefined variable: {variable_name}")
-    
-    def update(self, variable_name, value, data_type):
-        print(f"Updating {variable_name} to {value}, scopes: {self.scopes}")
         for scope in reversed(self.scopes):
             if variable_name in scope:
-                scope[variable_name] = (value, data_type)
-                return
+                entry = scope[variable_name]
+                if isinstance(entry, tuple) and isinstance(entry[0], dict):
+                    # Resolve variable reference (pass-by-reference)
+                    ref_scope, ref_type = entry
+                    for var in ref_scope:
+                        if ref_scope[var][1] == ref_type:
+                            return ref_scope[var][0]
+                return entry[0]  # Normal variable or constant
+        raise ValueError(f"Undefined variable: {variable_name}")
+
+    def update(self, variable_name, value, data_type):
+        if variable_name in self.constants:
+            raise ValueError(f"Cannot assign to constant '{variable_name}'")
+        for scope in reversed(self.scopes):
+            if variable_name in scope:
+                entry = scope[variable_name]
+                if isinstance(entry, tuple) and isinstance(entry[0], dict):
+                    # Update referenced scope (pass-by-reference)
+                    ref_scope, ref_type = entry
+                    for var in ref_scope:
+                        if ref_scope[var][1] == ref_type:
+                            ref_scope[var] = (value, ref_type)
+                            return
+                else:
+                    # Update normal variable
+                    scope[variable_name] = (value, data_type)
+                    return
         raise ValueError(f"Variable '{variable_name}' not declared")
 
     def is_declared(self, variable_name):
@@ -53,13 +74,19 @@ class Memory:
     def is_declared_in_current_scope(self, variable_name):
         return variable_name in self.scopes[-1]
 
-    def set_function(self, function_name, body):
-        """Store a function in the global scope."""
-        self.functions[function_name] = body
+    def set_function(self, name, body, params=None):
+        self.functions[name] = (body, params or [])
+        print(f"Stored function {name}: body={body}, params={params}")  # Debug
 
-    def get_function(self, function_name):
-        """Retrieve a function’s body."""
-        return self.functions.get(function_name)
+    def get_function(self, name):
+        return self.functions.get(name)
+    
+    def get_variable_ref(self, variable_name):
+        """Return (scope, type) for variable to allow reference updates."""
+        for scope in reversed(self.scopes):
+            if variable_name in scope:
+                return (scope, scope[variable_name][1])
+        raise ValueError(f"Undefined variable: {variable_name}")
 
     def __contains__(self, variable_name):
         return variable_name in self.memory
@@ -68,6 +95,7 @@ class Memory:
         self.memory = {}
         self.functions = {}
         self.scopes = [{}]
+        self.constants = set()
 
 
 if __name__ == "__main__":

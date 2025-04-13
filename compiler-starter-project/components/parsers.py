@@ -38,20 +38,29 @@ class ASTParser(Parser):
         print("Single statement without semicolon")
         return [p.statement]
 
-    # Typed variable declaration with assignment: type IDENTIFIER = expr;
+    # Typed declaration: [const] type IDENTIFIER = expr;
+    @_('CONST type IDENTIFIER ASSIGN expr SEMICOLON')
+    def statement(self, p):
+        print(" I am const")
+        return ('declare', p.type, p.IDENTIFIER, p.expr, p.lineno, True)
+
     @_('type IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
-        return ('declare', p.type, p.IDENTIFIER, p.expr)
-
-    # Typed variable declaration without assignment: type IDENTIFIER;
-    @_('type IDENTIFIER SEMICOLON')
-    def statement(self, p):
-        return ('declare', p.type, p.IDENTIFIER, None)
-
-    # Variable assignment: IDENTIFIER = expr;
+        print("I am variable")
+        return ('declare', p.type, p.IDENTIFIER, p.expr, p.lineno, False)
+    
+    # Assignment
     @_('IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
-        return ('assign', p.IDENTIFIER, p.expr)
+        return ('assign', p.IDENTIFIER, p.expr, p.lineno)
+
+    @_('CONST type IDENTIFIER SEMICOLON')
+    def statement(self, p):
+        return ('declare', p.type, p.IDENTIFIER, None, p.lineno, True)
+
+    @_('type IDENTIFIER SEMICOLON')
+    def statement(self, p):
+        return ('declare', p.type, p.IDENTIFIER, None, p.lineno, False)
 
     # Print statement: print(expr);
     @_('PRINT LPAREN expr RPAREN SEMICOLON')
@@ -68,15 +77,60 @@ class ASTParser(Parser):
     def statement(self, p):
         return ('while', p.expr, p.statements)
 
-    # Function definition: function IDENTIFIER() { statements }
-    @_('FUNCTION IDENTIFIER LPAREN RPAREN LBRACE statements RBRACE')
+    # # Function definition: function IDENTIFIER() { statements }
+    # @_('FUNCTION IDENTIFIER LPAREN RPAREN LBRACE statements RBRACE')
+    # def statement(self, p):
+    #     return ('function', p.IDENTIFIER, p.statements)
+    
+        # Function: function IDENTIFIER(param_list) { statements }
+    @_('FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
     def statement(self, p):
-        return ('function', p.IDENTIFIER, p.statements)
+        return ('function', p.IDENTIFIER, p.statements, p.param_list, p.lineno)
 
-    # Function call: IDENTIFIER();
-    @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
+    # # Function call: IDENTIFIER();
+    # @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
+    # def statement(self, p):
+    #     return ('call', p.IDENTIFIER)
+
+   # Function call
+    @_('IDENTIFIER LPAREN arg_list RPAREN SEMICOLON')
     def statement(self, p):
-        return ('call', p.IDENTIFIER)
+        return ('call', p.IDENTIFIER, p.arg_list, p.lineno)
+
+    # Parameter list: [const] type IDENTIFIER, ...
+    @_('CONST type IDENTIFIER')
+    def param_list(self, p):
+        return [('const', p.type, p.IDENTIFIER)]
+
+    @_('type IDENTIFIER')
+    def param_list(self, p):
+        return [('var', p.type, p.IDENTIFIER)]
+
+    @_('param_list COMMA CONST type IDENTIFIER')
+    def param_list(self, p):
+        return p.param_list + [('const', p.type, p.IDENTIFIER)]
+
+    @_('param_list COMMA type IDENTIFIER')
+    def param_list(self, p):
+        return p.param_list + [('var', p.type, p.IDENTIFIER)]
+
+    @_('')
+    def param_list(self, p):
+        return []
+
+    # Argument list
+    @_('expr')
+    def arg_list(self, p):
+        return [p.expr]
+
+    @_('arg_list COMMA expr')
+    def arg_list(self, p):
+        return p.arg_list + [p.expr]
+
+    @_('')
+    def arg_list(self, p):
+        return []
+    
 
     # Type rules
     @_('TYPE_INT')
@@ -187,25 +241,33 @@ class ASTParser(Parser):
     def evaluate_expr(self, expr):
         if isinstance(expr, tuple):
             op = expr[0]
+            # lineno = expr[-1] if op != 'var' else expr[2]
             if op == 'var':
                 if not self.memory.is_declared(expr[1]):
                     raise ValueError(f"Undefined variable: {expr[1]}")
-                return self.memory.get(expr[1])
+                value = self.memory.get(expr[1])
+                print(f"Evaluating var {expr[1]}: {value}")  # Debug
+                return value
+            
             if op == 'plus':
                 left = self.evaluate_expr(expr[1])
                 right = self.evaluate_expr(expr[2])
                 if isinstance(left, str) or isinstance(right, str):
                     return str(left) + str(right)
                 return left + right
+            
             elif op == 'minus':
                 return self.evaluate_expr(expr[1]) - self.evaluate_expr(expr[2])
+            
             elif op == 'times':
                 return self.evaluate_expr(expr[1]) * self.evaluate_expr(expr[2])
+            
             elif op == 'divide':
                 right = self.evaluate_expr(expr[2])
                 if right == 0:
                     raise ValueError("Division by zero")
                 return self.evaluate_expr(expr[1]) / right
+            
             elif op == 'lt':
                 return self.evaluate_expr(expr[1]) < self.evaluate_expr(expr[2])
             elif op == 'le':
@@ -227,7 +289,9 @@ class ASTParser(Parser):
         elif isinstance(stmt, tuple):
             op = stmt[0]
             if op == 'declare':
-                var_type, var_name, expr = stmt[1], stmt[2], stmt[3]
+                var_type, var_name, expr, lineno, is_constant = stmt[1], stmt[2], stmt[3], stmt[4], stmt[5]
+                if self.memory.is_declared_in_current_scope(var_name):
+                    raise ValueError(f"{'Constant' if is_constant else 'Variable'} '{var_name}' already declared in this scope")
                 if self.memory.is_declared_in_current_scope(var_name):
                     raise ValueError(f"Variable '{var_name}' already declared in this scope")
                 if expr is None:
@@ -235,21 +299,31 @@ class ASTParser(Parser):
                 else:
                     value = self.evaluate_expr(expr)
                     self.validate_type(value, var_type)
-                self.memory.set(var_name, value, var_type)
+                self.memory.set(var_name, value, var_type, is_constant=is_constant)
 
             elif op == 'assign':
-                var_name, expr = stmt[1], stmt[2]
-                if not self.memory.is_declared(var_name):
-                    raise ValueError(f"Variable '{var_name}' not declared")
-                value = self.evaluate_expr(expr)
-
-                self.memory.update(var_name, value, type(value))  # Update in declared scope
+                    # var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
+                    # if not self.memory.is_declared(var_name):
+                    #     raise ValueError(f"Variable '{var_name}' not declared")
+                    # value = self.evaluate_expr(expr)
+                    # scope_ref = self.memory.scopes[-1].get(var_name)
+                    # if isinstance(scope_ref, tuple) and isinstance(scope_ref[0], dict):
+                    #     scope_ref[0][var_name] = (value, scope_ref[1])  # Update referenced scope
+                    # else:
+                    #     self.memory.update(var_name, value, type(value))
+                    var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
+                    if not self.memory.is_declared(var_name):
+                        raise ValueError(f"Variable '{var_name}' not declared")
+                    if var_name in self.memory.constants:
+                        raise ValueError(f"Cannot assign to constant '{var_name}'")
+                    value = self.evaluate_expr(expr)
+                    self.memory.update(var_name, value, type(value))
 
             elif op == 'print':
-                value = self.evaluate_expr(stmt[1])
-                line_no = stmt[2]
+                args, lineno = stmt[1], stmt[2]
+                value = self.evaluate_expr(args)
                 if self.output_widget:
-                    self.output_widget.append(f"-> Print Line {stmt[2]}: " + str(value))
+                    self.output_widget.append(f"Line {lineno}: -> {str(value)}")
 
             elif op == 'if':
                 condition = self.evaluate_expr(stmt[1])
@@ -257,25 +331,57 @@ class ASTParser(Parser):
                     self.memory.enter_scope()
                     self.execute_statement(stmt[2])
                     self.memory.exit_scope()
+
             elif op == 'while':
                 while self.evaluate_expr(stmt[1]):
                     self.memory.enter_scope()
                     self.execute_statement(stmt[2])
                     self.memory.exit_scope()
+
             elif op == 'function':
-                name, body = stmt[1], stmt[2]
-                self.memory.set_function(name, body)
+                name, body, params, lineno = stmt[1], stmt[2], stmt[3], stmt[4]
+                self.memory.set_function(name, body, params)
+
+            # elif op == 'call':
+            #     name = stmt[1]
+            #     body = self.memory.get_function(name)
+            #     if body is None:
+            #         raise ValueError(f"Undefined function: {name}")
+            #     self.memory.enter_scope()
+            #     self.execute_statement(body)
+            #     self.memory.exit_scope()
+
             elif op == 'call':
-                name = stmt[1]
-                body = self.memory.get_function(name)
-                if body is None:
-                    raise ValueError(f"Undefined function: {name}")
-                self.memory.enter_scope()
-                self.execute_statement(body)
-                self.memory.exit_scope()
+                    name, args, lineno = stmt[1], stmt[2], stmt[3]
+                    func = self.memory.get_function(name)
+                    if func is None:
+                        raise ValueError(f"Undefined function: {name}")
+                    body, params = func
+
+                    if len(args) != len(params):
+                        raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
+                    self.memory.enter_scope()
+                    for (param_mode, param_type, param_name), arg in zip(params, args):
+                        if param_mode == 'const':
+                            value = self.evaluate_expr(arg)
+                            self.validate_type(value, param_type)
+                            self.memory.set(param_name, value, param_type)
+                        elif param_mode == 'var':
+                            if not isinstance(arg, tuple) or arg[0] != 'var':
+                                raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
+                            arg_name = arg[1]
+                            if not self.memory.is_declared(arg_name):
+                                raise ValueError(f"Undefined variable: {arg_name}")
+                            scope, var_type = self.memory.get_variable_ref(arg_name)
+                            self.validate_type(self.memory.get(arg_name), param_type)
+                            self.memory.scopes[-1][param_name] = (scope, var_type)  # Store reference
+                    self.execute_statement(body)
+                    self.memory.exit_scope()
+
 
     def execute(self, ast):
         self.execute_statement(ast)
+
 
 if __name__ == "__main__":
     lexer = Lexer()  # Initialize Lexer
