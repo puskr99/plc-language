@@ -34,36 +34,27 @@ class Memory:
             self.constants.add(variable_name)
 
     def get(self, variable_name):
+        print(f"Getting {variable_name}")
         for scope in reversed(self.scopes):
             if variable_name in scope:
                 entry = scope[variable_name]
+                print(f"Entry: {entry}")
                 if isinstance(entry, tuple) and isinstance(entry[0], dict):
-                    # Resolve variable reference (pass-by-reference)
-                    ref_scope, ref_type = entry
-                    for var in ref_scope:
-                        if ref_scope[var][1] == ref_type:
-                            return ref_scope[var][0]
-                return entry[0]  # Normal variable or constant
+                    ref_scope, ref_type, ref_var = entry
+                    print(f"Resolved to {ref_var}")
+                    return ref_scope[ref_var][0]
+                return entry[0]
         raise ValueError(f"Undefined variable: {variable_name}")
-
-    def update(self, variable_name, value, data_type):
-        if variable_name in self.constants:
-            raise ValueError(f"Cannot assign to constant '{variable_name}'")
-        for scope in reversed(self.scopes):
-            if variable_name in scope:
-                entry = scope[variable_name]
-                if isinstance(entry, tuple) and isinstance(entry[0], dict):
-                    # Update referenced scope (pass-by-reference)
-                    ref_scope, ref_type = entry
-                    for var in ref_scope:
-                        if ref_scope[var][1] == ref_type:
-                            ref_scope[var] = (value, ref_type)
-                            return
-                else:
-                    # Update normal variable
-                    scope[variable_name] = (value, data_type)
-                    return
-        raise ValueError(f"Variable '{variable_name}' not declared")
+    
+    # def get(self, variable_name):
+    #     for scope in reversed(self.scopes):
+    #         if variable_name in scope:
+    #             entry = scope[variable_name]
+    #             if isinstance(entry, tuple) and isinstance(entry[0], dict):
+    #                 ref_scope, ref_type, ref_var = entry
+    #                 return ref_scope[ref_var][0]  # Use specific variable
+    #             return entry[0]
+    #     raise ValueError(f"Undefined variable: {variable_name}")
 
     def is_declared(self, variable_name):
         for scope in reversed(self.scopes):
@@ -81,11 +72,45 @@ class Memory:
     def get_function(self, name):
         return self.functions.get(name)
     
-    def get_variable_ref(self, variable_name):
-        """Return (scope, type) for variable to allow reference updates."""
+    # def get_variable_ref(self, variable_name):
+    #     for scope in reversed(self.scopes):
+    #         if variable_name in scope:
+    #             return (scope, scope[variable_name][1], variable_name)  # Include variable name
+    #     raise ValueError(f"Undefined variable: {variable_name}")
+    
+
+
+    # def get(self, variable_name):
+    #     for scope in reversed(self.scopes):
+    #         if variable_name in scope:
+    #             entry = scope[variable_name]
+    #             if isinstance(entry, tuple) and isinstance(entry[0], dict):
+    #                 ref_scope, ref_type, ref_var = entry
+    #                 return ref_scope[ref_var][0]
+    #             return entry[0]
+    #     raise ValueError(f"Undefined variable: {variable_name}")
+
+    def update(self, variable_name, value, data_type):
+        if variable_name in self.constants:
+            raise ValueError(f"Cannot assign to constant '{variable_name}'")
         for scope in reversed(self.scopes):
             if variable_name in scope:
-                return (scope, scope[variable_name][1])
+                entry = scope[variable_name]
+                if isinstance(entry, tuple) and isinstance(entry[0], dict):
+                    ref_scope, ref_type, ref_var = entry
+                    if ref_var in self.constants:
+                        raise ValueError(f"Cannot assign to constant '{ref_var}'")
+                    ref_scope[ref_var] = (value, ref_type)
+                    return
+                else:
+                    scope[variable_name] = (value, data_type)
+                    return
+        raise ValueError(f"Variable '{variable_name}' not declared")
+
+    def get_variable_ref(self, variable_name):
+        for scope in reversed(self.scopes):
+            if variable_name in scope:
+                return (scope, scope[variable_name][1], variable_name)
         raise ValueError(f"Undefined variable: {variable_name}")
 
     def __contains__(self, variable_name):
@@ -104,3 +129,20 @@ if __name__ == "__main__":
     memory.set(variable_name='b', value="20", data_type=str)
     print(memory)
     print(memory.get(variable_name='b'))
+
+
+
+        # def get(self, variable_name):
+        # for scope in reversed(self.scopes):
+        #     if variable_name in scope:
+        #         entry = scope[variable_name]
+        #         if isinstance(entry, tuple) and isinstance(entry[0], dict):
+        #             # Resolve variable reference (pass-by-reference)
+        #             ref_scope, ref_type = entry
+        #             for var in ref_scope:
+        #                 if ref_scope[var][1] == ref_type:
+        #                     return ref_scope[var][0]
+        #         return entry[0]  # Normal variable or constant
+        # raise ValueError(f"Undefined variable: {variable_name}")
+
+

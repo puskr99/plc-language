@@ -297,56 +297,35 @@ class ASTParser(Parser):
                 var_type, var_name, expr, lineno, is_constant = stmt[1], stmt[2], stmt[3], stmt[4], stmt[5]
                 if self.memory.is_declared_in_current_scope(var_name):
                     raise ValueError(f"{'Constant' if is_constant else 'Variable'} '{var_name}' already declared in this scope")
-                if self.memory.is_declared_in_current_scope(var_name):
-                    raise ValueError(f"Variable '{var_name}' already declared in this scope")
                 if expr is None:
                     value = self.get_default_value(var_type)
                 else:
                     value = self.evaluate_expr(expr)
                     self.validate_type(value, var_type)
-                self.memory.set(var_name, value, var_type, is_constant=is_constant)
+                self.memory.set(var_name, value, var_type, is_constant)
 
             elif op == 'assign':
-                    # var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
-                    # if not self.memory.is_declared(var_name):
-                    #     raise ValueError(f"Variable '{var_name}' not declared")
-                    # value = self.evaluate_expr(expr)
-                    # scope_ref = self.memory.scopes[-1].get(var_name)
-                    # if isinstance(scope_ref, tuple) and isinstance(scope_ref[0], dict):
-                    #     scope_ref[0][var_name] = (value, scope_ref[1])  # Update referenced scope
-                    # else:
-                    #     self.memory.update(var_name, value, type(value))
-                    var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
-                    if not self.memory.is_declared(var_name):
-                        raise ValueError(f"Variable '{var_name}' not declared")
-                    if var_name in self.memory.constants:
-                        raise ValueError(f"Cannot assign to constant '{var_name}'")
-                    value = self.evaluate_expr(expr)
-                    self.memory.update(var_name, value, type(value))
+                var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
+                if not self.memory.is_declared(var_name):
+                    raise ValueError(f"Variable '{var_name}' not declared")
+                if var_name in self.memory.constants:
+                    raise ValueError(f"Cannot assign to constant '{var_name}'")
+                value = self.evaluate_expr(expr)
+                self.memory.update(var_name, value, type(value))
 
             elif op == 'print':
                 args, lineno = stmt[1], stmt[2]
-                value = self.evaluate_expr(args)
+                # Handle both list and single expr
+                args = args if isinstance(args, list) else [args]
+                values = [str(self.evaluate_expr(arg)) for arg in args]
                 if self.output_widget:
-                    self.output_widget.append(f"Line {lineno}: -> {str(value)}")
+                    self.output_widget.append(f"Line {lineno}: -> {' '.join(values)}")
 
             elif op == 'if':
                 condition = self.evaluate_expr(stmt[1])
                 if condition:
                     self.memory.enter_scope()
                     self.execute_statement(stmt[2])
-                    self.memory.exit_scope()
-            
-            elif op == 'if_else':
-                print("Inside IF ESLE")
-                condition = self.evaluate_expr(stmt[1])
-                if condition:
-                    self.memory.enter_scope()
-                    self.execute_statement(stmt[2])
-                    self.memory.exit_scope()
-                else:
-                    self.memory.enter_scope()
-                    self.execute_statement(stmt[3])
                     self.memory.exit_scope()
 
             elif op == 'while':
@@ -359,61 +338,74 @@ class ASTParser(Parser):
                 name, body, params, lineno = stmt[1], stmt[2], stmt[3], stmt[4]
                 self.memory.set_function(name, body, params)
 
-            # elif op == 'call':
-            #     name = stmt[1]
-            #     body = self.memory.get_function(name)
-            #     if body is None:
-            #         raise ValueError(f"Undefined function: {name}")
-            #     self.memory.enter_scope()
-            #     self.execute_statement(body)
-            #     self.memory.exit_scope()
-
             elif op == 'call':
-                    name, args, lineno = stmt[1], stmt[2], stmt[3]
-                    func = self.memory.get_function(name)
-                    if func is None:
-                        raise ValueError(f"Undefined function: {name}")
-                    body, params = func
+                name, args, lineno = stmt[1], stmt[2], stmt[3]
+                func = self.memory.get_function(name)
+                if func is None:
+                    raise ValueError(f"Undefined function: {name}")
+                print("DEBUGGGGGGGGGGGGG  ", len(func))
+                body, params = func
 
-                    if len(args) != len(params):
-                        raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
-                    self.memory.enter_scope()
-                    for (param_mode, param_type, param_name), arg in zip(params, args):
-                        if param_mode == 'const':
-                            value = self.evaluate_expr(arg)
-                            self.validate_type(value, param_type)
-                            self.memory.set(param_name, value, param_type)
-                        elif param_mode == 'var':
-                            if not isinstance(arg, tuple) or arg[0] != 'var':
-                                raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
-                            arg_name = arg[1]
-                            if not self.memory.is_declared(arg_name):
-                                raise ValueError(f"Undefined variable: {arg_name}")
-                            scope, var_type = self.memory.get_variable_ref(arg_name)
-                            self.validate_type(self.memory.get(arg_name), param_type)
-                            self.memory.scopes[-1][param_name] = (scope, var_type)  # Store reference
-                    self.execute_statement(body)
-                    self.memory.exit_scope()
+                if len(args) != len(params):
+                    raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
+                self.memory.enter_scope()
+                for (param_mode, param_type, param_name), arg in zip(params, args):
+
+                    if param_mode == 'const':
+                        if not arg[1] in self.memory.constants:
+                            raise ValueError(f"Cannot pass variable '{arg[1]}' as constant parameter")
+                        value = self.evaluate_expr(arg)
+                        self.validate_type(value, param_type)
+                        self.memory.set(param_name, value, param_type)
+
+                    elif param_mode == 'var':
+                        if not isinstance(arg, tuple) or arg[0] != 'var':
+                            raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
+                        
+                        arg_name = arg[1]
+
+                        if not self.memory.is_declared(arg_name):
+                            raise ValueError(f"Undefined variable: {arg_name}")
+                        
+                        if arg_name in self.memory.constants:
+                            raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter")
+                        
+                        scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)  # Handle 3 elements
+                        self.validate_type(self.memory.get(arg_name), param_type)
+                        self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
+
+                self.execute_statement(body)
+                self.memory.exit_scope()
 
 
     def execute(self, ast):
         self.execute_statement(ast)
 
 
-if __name__ == "__main__":
-    lexer = Lexer()  # Initialize Lexer
-    parser = ASTParser()  # Initialize the Parser
+# if __name__ == "__main__":
+#     lexer = Lexer()  # Initialize Lexer
+#     parser = ASTParser()  # Initialize the Parser
 
-    # Example input with multiple statements
-    input_code = """
-    for (int i = 0; i < 5; i = i + 1) {
-        print(i);
-    }
-    """
-    tokens = lexer.tokenize(input_code)  # Tokenize the input
-    token_list = [t for t in tokens]
-    print("Token stream:", token_list)
+#     # Example input with multiple statements
+#     input_code = """
+#     for (int i = 0; i < 5; i = i + 1) {
+#         print(i);
+#     }
+#     """
+#     tokens = lexer.tokenize(input_code)  # Tokenize the input
+#     token_list = [t for t in tokens]
+#     print("Token stream:", token_list)
     
-    # Parse the token list
-    result = parser.parse(tokens)
-    print("Parse result:", result)  # Should output something like: [('declare', 'a', 2), ('declare', 'b', 3)]
+#     # Parse the token list
+#     result = parser.parse(tokens)
+#     print("Parse result:", result)  # Should output something like: [('declare', 'a', 2), ('declare', 'b', 3)]
+
+
+
+
+
+
+
+
+
+    
