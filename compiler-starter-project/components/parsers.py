@@ -327,6 +327,17 @@ class ASTParser(Parser):
                     self.memory.enter_scope()
                     self.execute_statement(stmt[2])
                     self.memory.exit_scope()
+            
+            elif op == 'if_else':
+                condition = self.evaluate_expr(stmt[1])
+                if condition:
+                    self.memory.enter_scope()
+                    self.execute_statement(stmt[2])
+                    self.memory.exit_scope()
+                else:
+                    self.memory.enter_scope()
+                    self.execute_statement(stmt[3])
+                    self.memory.exit_scope()
 
             elif op == 'while':
                 while self.evaluate_expr(stmt[1]):
