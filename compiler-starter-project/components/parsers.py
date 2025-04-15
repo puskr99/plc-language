@@ -325,16 +325,24 @@ class ASTParser(Parser):
                 name, args, lineno = expr[1], expr[2], expr[3]
                 print(f"Executing call: {name} at line {lineno}")
                 func = self.memory.get_function(name)
+
                 if func is None:
                     raise ValueError(f"Undefined function: {name} at line {lineno}")
+
                 return_type, params, body = func  # Adjusted to match function tuple
                 result = self.execute_call(name, args, lineno)
+
                 if return_type is not None and result is None:
                     result = self.get_default_value(return_type)
                     # raise ValueError(f"Function {name} expected to return {return_type.__name__} at line {lineno}")
                     print("RETURNED DEFAULT VALUE FOR THE FUNCTION ", name)
+
+                elif return_type is None and result is not None:
+                    raise ValueError(f"Void function `{name}` cannot return any value.")
+                
+                self.validate_type(result, return_type)
                 return result
-        
+
         return expr  # Literal value (int, float, bool, str)
 
     def execute_statement(self, stmt):
@@ -352,8 +360,10 @@ class ASTParser(Parser):
             if op == 'declare':
                 var_type, var_name, expr, lineno, is_constant = stmt[1], stmt[2], stmt[3], stmt[4], stmt[5]
                 print(f"Declaring {var_name} = {expr}")
+
                 if self.memory.is_declared_in_current_scope(var_name):
                     raise ValueError(f"{'Constant' if is_constant else 'Variable'} '{var_name}' already declared at line {lineno}")
+
                 if expr is None:
                     value = self.get_default_value(var_type)
                 else:
@@ -365,8 +375,10 @@ class ASTParser(Parser):
                 var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
                 if not self.memory.is_declared(var_name):
                     raise ValueError(f"Variable '{var_name}' not declared at line {lineno}")
+
                 if var_name in self.memory.constants:
                     raise ValueError(f"Cannot assign to constant '{var_name}' at line {lineno}")
+
                 value = self.evaluate_expr(expr)
                 var_type = self.memory.get_type(var_name)
                 self.validate_type(value, var_type)
