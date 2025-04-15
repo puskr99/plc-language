@@ -6,7 +6,7 @@ class Lexer(Lexer):
         PRINT, TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING,
         BOOL_LITERAL, STRING_LITERAL, FLOAT_LITERAL, INT_LITERAL, IDENTIFIER,
         ASSIGN, SEMICOLON, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, LBRACE, RBRACE,
-        FOR, LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE, FUNCTION, CONST
+        LT, GT, LE, GE, EQ, NE, COMMA, IF, ELSE, WHILE, FUNCTION, CONST, VOID
     }
 
     # Ignore spaces and tabs
@@ -17,13 +17,13 @@ class Lexer(Lexer):
         self.lineno += len(t.value)
 
     # Define token patterns
-    FUNCTION = r'function'
+    FUNCTION = r'func'
+    VOID = r'void'
     PRINT = r'print'
     TYPE_INT = r'int'
     TYPE_FLOAT = r'float'
     TYPE_BOOL = r'bool'
     TYPE_STRING = r'string'
-    FOR = r'for'
     EQ = r'=='
     NE = r'!='
     LE = r'<='

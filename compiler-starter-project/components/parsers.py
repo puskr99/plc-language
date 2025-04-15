@@ -90,7 +90,11 @@ class ASTParser(Parser):
     #     return ('function', p.IDENTIFIER, p.statements)
     
         # Function: function IDENTIFIER(param_list) { statements }
-    @_('FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
+    @_('VOID FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
+    def statement(self, p):
+        return ('function', p.IDENTIFIER, p.statements, p.param_list, p.lineno)
+    
+    @_('type FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
     def statement(self, p):
         return ('function', p.IDENTIFIER, p.statements, p.param_list, p.lineno)
 

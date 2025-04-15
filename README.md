@@ -10,7 +10,7 @@ print("Value of x is");
 print(x);
 
 
-function test(int a) {
+void func test(int a) {
 print(a);
 a = a - 10;
 print(a);
