@@ -92,16 +92,15 @@ class ASTParser(Parser):
         # Function: function IDENTIFIER(param_list) { statements }
     @_('VOID FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
     def statement(self, p):
-        return ('function', p.IDENTIFIER, p.statements, p.param_list, p.lineno)
+        return ('function', None, p.IDENTIFIER, p.statements, p.param_list, p.lineno)
     
     @_('type FUNCTION IDENTIFIER LPAREN param_list RPAREN LBRACE statements RBRACE')
     def statement(self, p):
-        return ('function', p.IDENTIFIER, p.statements, p.param_list, p.lineno)
+        return ('function', p.type, p.IDENTIFIER, p.statements, p.param_list, p.lineno)
 
-    # # Function call: IDENTIFIER();
-    # @_('IDENTIFIER LPAREN RPAREN SEMICOLON')
-    # def statement(self, p):
-    #     return ('call', p.IDENTIFIER)
+    @_('RETURN expr SEMICOLON')
+    def expr(self, p):
+        return ('return', p.expr, p.lineno)
 
    # Function call
     @_('IDENTIFIER LPAREN arg_list RPAREN SEMICOLON')
@@ -365,54 +364,61 @@ class ASTParser(Parser):
                     self.memory.exit_scope()
 
             elif op == 'function':
-                name, body, params, lineno = stmt[1], stmt[2], stmt[3], stmt[4]
-                self.memory.set_function(name, body, params)
+                print("++++++++++++++++++++++++++++++++++++++++")
+                return_type, name, params, body = stmt[1], stmt[2], stmt[3], stmt[4]
+                print("************************************")
+                print(return_type, name, params, body)
+                self.memory.set_function(name, (return_type, params, body))
 
             elif op == 'call':
+                print("_-------------------------------------")
                 name, args, lineno = stmt[1], stmt[2], stmt[3]
-                func = self.memory.get_function(name)
-                if func is None:
-                    raise ValueError(f"Undefined function: {name}")
-                print("DEBUGGGGGGGGGGGGG  ", len(func))
-                body, params = func
+                return self.execute_call(name, args, lineno)
 
-                if len(args) != len(params):
-                    raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
-                self.memory.enter_scope()
-                for (param_mode, param_type, param_name), arg in zip(params, args):
+    def execute_call(self, name, args, lineno):
+        func = self.memory.get_function(name)
+        if func is None:
+            raise ValueError(f"Undefined function: {name}")
+        print("DEBUGGGGGGGGGGGGG  ", len(func))
+        return_type, body, params = func
 
-                    if param_mode == 'const':
-                        if isinstance(arg, tuple) and arg[0] == 'var':
-                            arg_name = arg[1]
-                            if not arg_name in self.memory.constants:
-                                raise ValueError(f"Cannot pass a variable '{arg_name}' as constant parameter")
-                            value = self.evaluate_expr(arg)
-                        elif isinstance(arg, (int, float, str, bool)):  # Literals
-                            value = arg
-                        else:
-                            raise ValueError(f"Constant parameter '{param_name}' requires a constant or literal.")
-                        self.validate_type(value, param_type)
-                        self.memory.set(param_name, value, param_type)
+        if len(args) != len(params):
+            raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
+        self.memory.enter_scope()
+        for (param_mode, param_type, param_name), arg in zip(params, args):
 
-                    elif param_mode == 'var':
-                        if not isinstance(arg, tuple) or arg[0] != 'var':
-                            raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
-                        
-                        arg_name = arg[1]
+            if param_mode == 'const':
+                if isinstance(arg, tuple) and arg[0] == 'var':
+                    arg_name = arg[1]
+                    if not arg_name in self.memory.constants:
+                        raise ValueError(f"Cannot pass a variable '{arg_name}' as constant parameter")
+                    value = self.evaluate_expr(arg)
+                elif isinstance(arg, (int, float, str, bool)):  # Literals
+                    value = arg
+                else:
+                    raise ValueError(f"Constant parameter '{param_name}' requires a constant or literal.")
+                self.validate_type(value, param_type)
+                self.memory.set(param_name, value, param_type)
 
-                        if not self.memory.is_declared(arg_name):
-                            raise ValueError(f"Undefined variable: {arg_name}")
-                        
-                        if arg_name in self.memory.constants:
-                            raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter")
-                        
-                        scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)  # Handle 3 elements
-                        self.validate_type(self.memory.get(arg_name), param_type)
-                        self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
+            elif param_mode == 'var':
+                if not isinstance(arg, tuple) or arg[0] != 'var':
+                    raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
+                
+                arg_name = arg[1]
 
-                self.execute_statement(body)
-                self.memory.exit_scope()
+                if not self.memory.is_declared(arg_name):
+                    raise ValueError(f"Undefined variable: {arg_name}")
+                
+                if arg_name in self.memory.constants:
+                    raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter")
+                
+                scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)  # Handle 3 elements
+                self.validate_type(self.memory.get(arg_name), param_type)
+                self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
 
+        result = self.execute_statement(body)
+        self.memory.exit_scope()
+        return result
 
     def execute(self, ast):
         self.execute_statement(ast)

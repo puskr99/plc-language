@@ -65,9 +65,9 @@ class Memory:
     def is_declared_in_current_scope(self, variable_name):
         return variable_name in self.scopes[-1]
 
-    def set_function(self, name, body, params=None):
-        self.functions[name] = (body, params or [])
-        print(f"Stored function {name}: body={body}, params={params}")  # Debug
+    def set_function(self, name, func_info):
+        self.functions[name] = func_info
+        print(f"Stored function {name}: info={func_info}")  # Debug
 
     def get_function(self, name):
         return self.functions.get(name)
