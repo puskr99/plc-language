@@ -39,7 +39,11 @@ class MainWindow(QMainWindow):
         try:
             # Parse and execute the code
             tokens = lexer.tokenize(input_text)
+            # print("Tokens are  ")
+            # for i in tokens:
+            #     print(i)
             result = parser.parse(tokens)
+            print("Result is this", result)
             parser.execute(result)
             
             # Display results in the output console

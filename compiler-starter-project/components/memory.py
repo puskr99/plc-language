@@ -46,6 +46,16 @@ class Memory:
                 return entry[0]
         raise ValueError(f"Undefined variable: {variable_name}")
     
+    
+    def get_type(self, name):
+        for scope in reversed(self.scopes):
+            if name in scope:
+                entry = scope[name]
+                if isinstance(entry, tuple) and isinstance(entry[0], dict):
+                    return entry[1]
+                return entry[1]
+        raise ValueError(f"Undefined variable: {name}")
+    
     # def get(self, variable_name):
     #     for scope in reversed(self.scopes):
     #         if variable_name in scope:

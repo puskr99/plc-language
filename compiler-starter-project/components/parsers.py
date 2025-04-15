@@ -99,12 +99,19 @@ class ASTParser(Parser):
         return ('function', p.type, p.IDENTIFIER, p.statements, p.param_list, p.lineno)
 
     @_('RETURN expr SEMICOLON')
-    def expr(self, p):
+    def statement(self, p):
+        print("I AM IN RETURN")
         return ('return', p.expr, p.lineno)
 
    # Function call
     @_('IDENTIFIER LPAREN arg_list RPAREN SEMICOLON')
     def statement(self, p):
+        return ('call', p.IDENTIFIER, p.arg_list, p.lineno)
+
+    # assign the function to a value
+    @_('IDENTIFIER LPAREN arg_list RPAREN')
+    def expr(self, p):
+        print(f"Parsing expr call: {p.IDENTIFIER}()")
         return ('call', p.IDENTIFIER, p.arg_list, p.lineno)
 
     # Parameter list: [const] type IDENTIFIER, ...
@@ -255,15 +262,14 @@ class ASTParser(Parser):
     def evaluate_expr(self, expr):
         if isinstance(expr, tuple):
             op = expr[0]
-            # lineno = expr[-1] if op != 'var' else expr[2]
             if op == 'var':
                 if not self.memory.is_declared(expr[1]):
                     raise ValueError(f"Undefined variable: {expr[1]}")
                 value = self.memory.get(expr[1])
-                print(f"Evaluating var {expr[1]}: {value}")  # Debug
+                print(f"Evaluating var {expr[1]}: {value}")
                 return value
             
-            if op == 'plus':
+            elif op == 'plus':
                 left = self.evaluate_expr(expr[1])
                 right = self.evaluate_expr(expr[2])
                 if isinstance(left, str) and isinstance(right, str):
@@ -274,22 +280,33 @@ class ASTParser(Parser):
                     raise TypeError(f'Illegal operation "+" on {type(left)} and {type(right)}')
             
             elif op == 'minus':
-                return self.evaluate_expr(expr[1]) - self.evaluate_expr(expr[2])
+                left = self.evaluate_expr(expr[1])
+                right = self.evaluate_expr(expr[2])
+                if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
+                    raise TypeError(f'Illegal operation "-" on {type(left)} and {type(right)}')
+                return left - right
             
             elif op == 'u_minus':
                 value = self.evaluate_expr(expr[1])
                 if not isinstance(value, (int, float)):
-                    raise ValueError(f"Unary minus applied to non-numeric value.")
+                    raise ValueError(f"Unary minus applied to non-numeric value")
                 return -value
             
             elif op == 'times':
-                return self.evaluate_expr(expr[1]) * self.evaluate_expr(expr[2])
+                left = self.evaluate_expr(expr[1])
+                right = self.evaluate_expr(expr[2])
+                if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
+                    raise TypeError(f'Illegal operation "*" on {type(left)} and {type(right)}')
+                return left * right
             
             elif op == 'divide':
+                left = self.evaluate_expr(expr[1])
                 right = self.evaluate_expr(expr[2])
                 if right == 0:
                     raise ValueError("Division by zero")
-                return self.evaluate_expr(expr[1]) / right
+                if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
+                    raise TypeError(f'Illegal operation "/" on {type(left)} and {type(right)}')
+                return left / right
             
             elif op == 'lt':
                 return self.evaluate_expr(expr[1]) < self.evaluate_expr(expr[2])
@@ -303,18 +320,40 @@ class ASTParser(Parser):
                 return self.evaluate_expr(expr[1]) == self.evaluate_expr(expr[2])
             elif op == 'ne':
                 return self.evaluate_expr(expr[1]) != self.evaluate_expr(expr[2])
+
+            elif op == 'call':
+                name, args, lineno = expr[1], expr[2], expr[3]
+                print(f"Executing call: {name} at line {lineno}")
+                func = self.memory.get_function(name)
+                if func is None:
+                    raise ValueError(f"Undefined function: {name} at line {lineno}")
+                return_type, params, body = func  # Adjusted to match function tuple
+                result = self.execute_call(name, args, lineno)
+                if return_type is not None and result is None:
+                    result = self.get_default_value(return_type)
+                    # raise ValueError(f"Function {name} expected to return {return_type.__name__} at line {lineno}")
+                    print("RETURNED DEFAULT VALUE FOR THE FUNCTION ", name)
+                return result
+        
         return expr  # Literal value (int, float, bool, str)
 
     def execute_statement(self, stmt):
+        lineno = stmt[-1]
+        print(f"Executing statement: {stmt}")
         if isinstance(stmt, list):
             for s in stmt:
-                self.execute_statement(s)
+                result = self.execute_statement(s)
+                if result is not None:
+                    return result
+            return None
         elif isinstance(stmt, tuple):
             op = stmt[0]
+            lineno = stmt[-1]
             if op == 'declare':
                 var_type, var_name, expr, lineno, is_constant = stmt[1], stmt[2], stmt[3], stmt[4], stmt[5]
+                print(f"Declaring {var_name} = {expr}")
                 if self.memory.is_declared_in_current_scope(var_name):
-                    raise ValueError(f"{'Constant' if is_constant else 'Variable'} '{var_name}' already declared in this scope")
+                    raise ValueError(f"{'Constant' if is_constant else 'Variable'} '{var_name}' already declared at line {lineno}")
                 if expr is None:
                     value = self.get_default_value(var_type)
                 else:
@@ -325,96 +364,108 @@ class ASTParser(Parser):
             elif op == 'assign':
                 var_name, expr, lineno = stmt[1], stmt[2], stmt[3]
                 if not self.memory.is_declared(var_name):
-                    raise ValueError(f"Variable '{var_name}' not declared")
+                    raise ValueError(f"Variable '{var_name}' not declared at line {lineno}")
                 if var_name in self.memory.constants:
-                    raise ValueError(f"Cannot assign to constant '{var_name}'")
+                    raise ValueError(f"Cannot assign to constant '{var_name}' at line {lineno}")
                 value = self.evaluate_expr(expr)
-                self.memory.update(var_name, value, type(value))
+                var_type = self.memory.get_type(var_name)
+                self.validate_type(value, var_type)
+                self.memory.update(var_name, value, var_type)
 
             elif op == 'print':
-                args, lineno = stmt[1], stmt[2]
-                # Handle both list and single expr
-                args = args if isinstance(args, list) else [args]
-                values = [str(self.evaluate_expr(arg)) for arg in args]
+                expr, lineno = stmt[1], stmt[2]
+                value = self.evaluate_expr(expr)
                 if self.output_widget:
-                    self.output_widget.append(f"Line {lineno}: -> {' '.join(values)}")
+                    self.output_widget.append(f"Line {lineno}: -> {value}")
 
             elif op == 'if':
-                condition = self.evaluate_expr(stmt[1])
-                if condition:
+                condition, statements = stmt[1], stmt[2]
+                if self.evaluate_expr(condition):
                     self.memory.enter_scope()
-                    self.execute_statement(stmt[2])
+                    result = self.execute_statement(statements)
                     self.memory.exit_scope()
-            
+                    return result
+
             elif op == 'if_else':
-                condition = self.evaluate_expr(stmt[1])
-                if condition:
+                condition, statements_true, statements_false = stmt[1], stmt[2], stmt[3]
+                if self.evaluate_expr(condition):
                     self.memory.enter_scope()
-                    self.execute_statement(stmt[2])
+                    result = self.execute_statement(statements_true)
                     self.memory.exit_scope()
+                    return result
                 else:
                     self.memory.enter_scope()
-                    self.execute_statement(stmt[3])
+                    result = self.execute_statement(statements_false)
                     self.memory.exit_scope()
+                    return result
 
             elif op == 'while':
-                while self.evaluate_expr(stmt[1]):
+                condition, statements = stmt[1], stmt[2]
+                while self.evaluate_expr(condition):
                     self.memory.enter_scope()
-                    self.execute_statement(stmt[2])
+                    result = self.execute_statement(statements)
                     self.memory.exit_scope()
+                    if result is not None:
+                        return result
 
             elif op == 'function':
-                print("++++++++++++++++++++++++++++++++++++++++")
-                return_type, name, params, body = stmt[1], stmt[2], stmt[3], stmt[4]
-                print("************************************")
-                print(return_type, name, params, body)
+                return_type, name, body, params = stmt[1], stmt[2], stmt[3], stmt[4]
+                print(f"Storing function: {name}")
                 self.memory.set_function(name, (return_type, params, body))
 
             elif op == 'call':
-                print("_-------------------------------------")
                 name, args, lineno = stmt[1], stmt[2], stmt[3]
-                return self.execute_call(name, args, lineno)
+                print(f"Executing statement call: {name} at line {lineno}")
+                result = self.execute_call(name, args, lineno)
+                return result
+
+            elif op == 'return':
+                expr = stmt[1]
+                value = self.evaluate_expr(expr)
+                print("RETURNED VALUE", value)
+                return value
+
+            else:
+                raise ValueError(f"Unknown operation '{op}' at line {lineno}")
+        else:
+            raise ValueError(f"Invalid statement: {stmt} at line {lineno}")
+        return None
 
     def execute_call(self, name, args, lineno):
         func = self.memory.get_function(name)
         if func is None:
-            raise ValueError(f"Undefined function: {name}")
-        print("DEBUGGGGGGGGGGGGG  ", len(func))
-        return_type, body, params = func
-
+            raise ValueError(f"Undefined function: {name} at line {lineno}")
+        return_type, params, body = func
         if len(args) != len(params):
-            raise ValueError(f"Expected {len(params)} arguments, got {len(args)}")
+            raise ValueError(f"Expected {len(params)} arguments, got {len(args)} at line {lineno}")
+        
         self.memory.enter_scope()
-        for (param_mode, param_type, param_name), arg in zip(params, args):
 
+        for (param_mode, param_type, param_name), arg in zip(params, args):
             if param_mode == 'const':
                 if isinstance(arg, tuple) and arg[0] == 'var':
                     arg_name = arg[1]
-                    if not arg_name in self.memory.constants:
-                        raise ValueError(f"Cannot pass a variable '{arg_name}' as constant parameter")
+                    if arg_name not in self.memory.constants:
+                        raise ValueError(f"Cannot pass non-constant variable '{arg_name}' as constant parameter at line {lineno}")
                     value = self.evaluate_expr(arg)
-                elif isinstance(arg, (int, float, str, bool)):  # Literals
+                elif isinstance(arg, (int, float, str, bool)):
                     value = arg
                 else:
-                    raise ValueError(f"Constant parameter '{param_name}' requires a constant or literal.")
+                    raise ValueError(f"Constant parameter '{param_name}' requires a constant variable or literal at line {lineno}")
                 self.validate_type(value, param_type)
-                self.memory.set(param_name, value, param_type)
+                self.memory.set(param_name, value, param_type, is_constant=True)
 
             elif param_mode == 'var':
-                if not isinstance(arg, tuple) or arg[0] != 'var':
-                    raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression")
-                
-                arg_name = arg[1]
-
-                if not self.memory.is_declared(arg_name):
-                    raise ValueError(f"Undefined variable: {arg_name}")
-                
-                if arg_name in self.memory.constants:
-                    raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter")
-                
-                scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)  # Handle 3 elements
-                self.validate_type(self.memory.get(arg_name), param_type)
-                self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
+                    if not isinstance(arg, tuple) or arg[0] != 'var':
+                        raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression at line {lineno}")
+                    arg_name = arg[1]
+                    if not self.memory.is_declared(arg_name):
+                        raise ValueError(f"Undefined variable: {arg_name} at line {lineno}")
+                    if arg_name in self.memory.constants:
+                        raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter at line {lineno}")
+                    scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)
+                    self.validate_type(self.memory.get(arg_name), param_type)
+                    self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
 
         result = self.execute_statement(body)
         self.memory.exit_scope()

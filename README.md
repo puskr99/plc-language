@@ -10,15 +10,21 @@ print("Value of x is");
 print(x);
 
 
-void func test(int a) {
-print(a);
-a = a - 10;
-print(a);
+int m = 5;
+
+int func test(int x, const int y) {
+    x = 10+y;
+    return x;
 }
 
+int  a = test(m, 6);
+print(a);
+print(m);
 
-test(x);
-print(x);
+if (test(m, 6) > 10){
+   print("Greater than 10");
+   print(test(m, 6));
+}
 
 
 while (x < 10){
