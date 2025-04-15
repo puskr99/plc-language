@@ -378,9 +378,15 @@ class ASTParser(Parser):
                 for (param_mode, param_type, param_name), arg in zip(params, args):
 
                     if param_mode == 'const':
-                        if not arg[1] in self.memory.constants:
-                            raise ValueError(f"Cannot pass variable '{arg[1]}' as constant parameter")
-                        value = self.evaluate_expr(arg)
+                        if isinstance(arg, tuple) and arg[0] == 'var':
+                            arg_name = arg[1]
+                            if not arg_name in self.memory.constants:
+                                raise ValueError(f"Cannot pass a variable '{arg_name}' as constant parameter")
+                            value = self.evaluate_expr(arg)
+                        elif isinstance(arg, (int, float, str, bool)):  # Literals
+                            value = arg
+                        else:
+                            raise ValueError(f"Constant parameter '{param_name}' requires a constant or literal.")
                         self.validate_type(value, param_type)
                         self.memory.set(param_name, value, param_type)
 
