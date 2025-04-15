@@ -8,9 +8,11 @@ class ASTParser(Parser):
     tokens = Lexer.tokens
 
     precedence = (
+        ('left', 'EQ', 'NE'),
+        ('left', 'LT', 'LE', 'GT', 'GE'),
         ('left', 'PLUS', 'MINUS'),
         ('left', 'TIMES', 'DIVIDE'),
-        ('nonassoc', 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'),
+        ('right', 'UMINUS'),  # Unary minus
     )
 
     def __init__(self, output_widget=None):
@@ -162,6 +164,10 @@ class ASTParser(Parser):
     @_('expr MINUS expr')
     def expr(self, p):
         return ('minus', p.expr0, p.expr1)
+    
+    @_('MINUS expr %prec UMINUS')
+    def expr(self, p):
+        return ('u_minus', p.expr)
 
     @_('expr TIMES expr')
     def expr(self, p):
@@ -263,6 +269,12 @@ class ASTParser(Parser):
             
             elif op == 'minus':
                 return self.evaluate_expr(expr[1]) - self.evaluate_expr(expr[2])
+            
+            elif op == 'u_minus':
+                value = self.evaluate_expr(expr[1])
+                if not isinstance(value, (int, float)):
+                    raise ValueError(f"Unary minus applied to non-numeric value.")
+                return -value
             
             elif op == 'times':
                 return self.evaluate_expr(expr[1]) * self.evaluate_expr(expr[2])

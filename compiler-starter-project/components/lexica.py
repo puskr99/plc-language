@@ -33,6 +33,7 @@ class Lexer(Lexer):
     ASSIGN = r'='
     SEMICOLON = r';'
     PLUS = r'\+'
+    MINUS = r'-'  # Handles both unary and binary minus
     TIMES = r'\*'
     DIVIDE = r'/'
     LPAREN = r'\('
@@ -43,7 +44,6 @@ class Lexer(Lexer):
     STRING_LITERAL = r'"[^"]*"'
     FLOAT_LITERAL = r'-?\d+\.\d+'
     INT_LITERAL = r'-?\d+'
-    MINUS = r'-'
     CONST = r'const'
     IF = r'if'
     ELSE = r'else'
