@@ -51,9 +51,6 @@ class Lexer(Lexer):
     WHILE = r'while'
     IDENTIFIER = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
-
-
-
     # Error handling
     def error(self, t):
         print(f"Illegal character '{t.value[0]}'")

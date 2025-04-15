@@ -263,9 +263,12 @@ class ASTParser(Parser):
             if op == 'plus':
                 left = self.evaluate_expr(expr[1])
                 right = self.evaluate_expr(expr[2])
-                if isinstance(left, str) or isinstance(right, str):
+                if isinstance(left, str) and isinstance(right, str):
                     return str(left) + str(right)
-                return left + right
+                elif isinstance(left, (int, float)) and isinstance(right, (int, float)):
+                    return left + right
+                else:
+                    raise TypeError(f'Illegal operation "+" on {type(left)} and {type(right)}')
             
             elif op == 'minus':
                 return self.evaluate_expr(expr[1]) - self.evaluate_expr(expr[2])
