@@ -41,10 +41,10 @@ class ASTParser(Parser):
         return [p.statement]
 
     # Typed declaration: [const] type IDENTIFIER = expr;
-    @_('CONST type IDENTIFIER ASSIGN expr SEMICOLON')
-    def statement(self, p):
-        print(" I am const")
-        return ('declare', p.type, p.IDENTIFIER, p.expr, p.lineno, True)
+    # @_('CONST type IDENTIFIER ASSIGN expr SEMICOLON')
+    # def statement(self, p):
+    #     print(" I am const")
+    #     return ('declare', p.type, p.IDENTIFIER, p.expr, p.lineno, True)
 
     @_('type IDENTIFIER ASSIGN expr SEMICOLON')
     def statement(self, p):
@@ -56,9 +56,9 @@ class ASTParser(Parser):
     def statement(self, p):
         return ('assign', p.IDENTIFIER, p.expr, p.lineno)
 
-    @_('CONST type IDENTIFIER SEMICOLON')
-    def statement(self, p):
-        return ('declare', p.type, p.IDENTIFIER, None, p.lineno, True)
+    # @_('CONST type IDENTIFIER SEMICOLON')
+    # def statement(self, p):
+    #     return ('declare', p.type, p.IDENTIFIER, None, p.lineno, True)
 
     @_('type IDENTIFIER SEMICOLON')
     def statement(self, p):
@@ -457,13 +457,13 @@ class ASTParser(Parser):
             if param_mode == 'const':
                 if isinstance(arg, tuple) and arg[0] == 'var':
                     arg_name = arg[1]
-                    if arg_name not in self.memory.constants:
-                        raise ValueError(f"Cannot pass non-constant variable '{arg_name}' as constant parameter at line {lineno}")
+                    # if arg_name not in self.memory.constants:
+                    #     raise ValueError(f"Cannot pass non-constant variable '{arg_name}' as constant parameter at line {lineno}")
                     value = self.evaluate_expr(arg)
                 elif isinstance(arg, (int, float, str, bool)):
                     value = arg
-                else:
-                    raise ValueError(f"Constant parameter '{param_name}' requires a constant variable or literal at line {lineno}")
+                # else:
+                #     raise ValueError(f"Constant parameter '{param_name}' requires a constant variable or literal at line {lineno}")
                 self.validate_type(value, param_type)
                 self.memory.set(param_name, value, param_type, is_constant=True)
 
