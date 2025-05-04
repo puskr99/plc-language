@@ -383,6 +383,12 @@ class ASTParser(Parser):
 
             elif op == 'function':
                 return_type, name, body, params, lineno = stmt[1], stmt[2], stmt[3], stmt[4], stmt[5]
+                
+                # Check for duplicate parameter names
+                param_names = [param[2] for param in params]  # Extract parameter names
+                if len(param_names) != len(set(param_names)):
+                    raise ValueError(f"Duplicate parameter names detected in function '{name}' at line {lineno}: {param_names}")
+                
                 print(f"Storing function: {name}")
                 self.memory.set_function(name, (return_type, params, body))
 
