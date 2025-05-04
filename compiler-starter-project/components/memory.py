@@ -26,16 +26,19 @@ class Memory:
             self.constants.add(variable_name)
 
     def get(self, variable_name):
-        print(f"Getting {variable_name}")  # Debug
         for scope in reversed(self.scopes):
             if variable_name in scope:
                 entry = scope[variable_name]
-                print(f"Entry: {entry}")  # Debug
                 if isinstance(entry, tuple) and isinstance(entry[0], dict):
                     ref_scope, ref_type, ref_var = entry
-                    print(f"Resolved to {ref_var}")  # Debug
-                    return ref_scope[ref_var][0]
+                    # Resolve reference in the referenced scope
+                    if ref_var in ref_scope:
+                        return ref_scope[ref_var][0]
+                    else:
+                        raise ValueError(f"Referenced variable '{ref_var}' not found in its scope.")
                 return entry[0]
+        raise ValueError(f"Undefined variable: {variable_name}")
+
     def get_type(self, name):
         for scope in reversed(self.scopes):
             if name in scope:
@@ -81,7 +84,13 @@ class Memory:
     def get_variable_ref(self, variable_name):
         for scope in reversed(self.scopes):
             if variable_name in scope:
-                return (scope, scope[variable_name][1], variable_name)
+                entry = scope[variable_name]
+                if isinstance(entry, tuple) and isinstance(entry[0], dict):
+                    # This is a reference
+                    ref_scope, ref_type, ref_var = entry
+                    return ref_scope, ref_type, ref_var
+                # Return the direct variable from its current scope
+                return scope, entry[1], variable_name
         raise ValueError(f"Undefined variable: {variable_name}")
 
     def reset_memory(self):

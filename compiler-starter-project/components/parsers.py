@@ -429,16 +429,21 @@ class ASTParser(Parser):
                     self.memory.set(param_name, value, param_type, is_constant=True)
 
                 elif param_mode == 'var':
-                        if not isinstance(arg, tuple) or arg[0] != 'var':
-                            raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression at line {lineno}")
-                        arg_name = arg[1]
-                        if not self.memory.is_declared(arg_name):
-                            raise ValueError(f"Undefined variable: {arg_name} at line {lineno}")
-                        if arg_name in self.memory.constants:
-                            raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter at line {lineno}")
-                        scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)
-                        self.validate_type(self.memory.get(arg_name), param_type)
-                        self.memory.scopes[-1][param_name] = (scope, var_type, ref_var)
+                    if not isinstance(arg, tuple) or arg[0] != 'var':
+                        raise ValueError(f"Variable parameter '{param_name}' requires a variable, got expression at line {lineno}")
+                    arg_name = arg[1]
+                    if not self.memory.is_declared(arg_name):
+                        raise ValueError(f"Undefined variable: {arg_name} at line {lineno}")
+                    if arg_name in self.memory.constants:
+                        raise ValueError(f"Cannot pass constant '{arg_name}' as variable parameter at line {lineno}")
+                    
+                    # Fetch reference details
+                    ref_scope, var_type, ref_var = self.memory.get_variable_ref(arg_name)
+                    if var_type != param_type:
+                        raise ValueError(f"Type mismatch for parameter '{param_name}' at line {lineno}. Expected {param_type}, got {var_type}")
+                    
+                    # Store the reference in the current scope
+                    self.memory.scopes[-1][param_name] = (ref_scope, param_type, ref_var)
 
             result = self.execute_statement(body)
             self.memory.exit_scope()
