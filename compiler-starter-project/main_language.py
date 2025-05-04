@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
 
         # Ensure the output console is read-only
         self.output_console.setReadOnly(True)
+        # self.output_console.setStyleSheet("QTextEdit { color: red; }")
         self.clear_button.clicked.connect(self.output_console.clear)
 
     def execute_code(self):

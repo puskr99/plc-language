@@ -349,7 +349,7 @@ class ASTParser(Parser):
                 print(f"Debug: Print value = {value}")
                 if self.output_widget:
                     # self.output_widget.append(f"Line {lineno}: -> {value}")
-                    self.output_widget.append("-> " + str(value))
+                    self.output_widget.append(str(value))
                 print(value)
 
             elif op == 'if':
@@ -458,7 +458,7 @@ class ASTParser(Parser):
 
     def execute(self, ast):
         if ast is None:
-            raise EOFError("Input some code and run.")
+            raise EOFError("End of File.")
 
         self.execute_statement(ast)
 
