@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         # Ensure the output console is read-only
         self.output_console.setReadOnly(True)
         # self.output_console.setStyleSheet("QTextEdit { color: red; }")
-        self.clear_button.clicked.connect(self.output_console.clear)
+        self.clear_button.clicked.connect(lambda: (self.output_console.clear(), self.code_input.clear()))
 
         self.basic_ex_button.clicked.connect(lambda: self.add_examples(1))
         self.if_else_button.clicked.connect(lambda: self.add_examples(2))
