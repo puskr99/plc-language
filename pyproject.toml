@@ -29,5 +29,5 @@ working_dir = "compiler-starter-project"
 cmd = "pyqt6-tools designer compiler-starter-project/components/main_language.ui"
 working_dir = "compiler-starter-project"
 
-[tool.pdm.scripts.designer]
-cmd = "export PATH=$PATH:./.venv/lib/python3.9/site-packages/qt6_applications/Qt/bin  && designer"
+#[tool.pdm.scripts.designer]
+#cmd = "export PATH=$PATH:./.venv/lib/python3.9/site-packages/qt6_applications/Qt/bin  && designer"
