@@ -3,6 +3,16 @@
 This document serves as a guide for using and understanding the WSP programming language. The language supports basic data types, functions, control structures (if, while), and basic operations like arithmetic and string concatenation.
 
 ---
+## Screenshots
+
+### UI Overview
+
+![UI Layout](images/lang_ui.png)
+
+### Function
+
+![Function](images/function.png)
+---
 
 ## How to Run
 
@@ -22,7 +32,7 @@ Follow these steps to get started:
 ---
 
 ## Requirements
-Make sure you have the necessary dependencies installed via:
+Make sure you have the necessary de pendencies installed via:
 ```sh
 pdm install
 ```
